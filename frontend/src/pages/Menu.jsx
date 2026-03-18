@@ -42,12 +42,13 @@ function Menu() {
           </Link>
         </div>
         
-        <div className="relative">
+        <div className="relative flex items-center gap-3">
+          <span className="hidden sm:block text-[11px] font-black text-gray-700 uppercase tracking-widest mt-0.5">Furkan Tatar</span>
           <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="focus:outline-none transition-transform active:scale-95">
             <img src="https://ui-avatars.com/api/?name=Furkan+Tatar&background=059669&color=fff" className="w-10 h-10 rounded-full border-2 border-green-500 shadow-md" alt="F" />
           </button>
           {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-200">
+            <div className="absolute right-0 top-12 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-200">
               <Link to="/account-settings" className="block px-4 py-3 text-[11px] font-black text-gray-700 hover:bg-green-50 transition uppercase tracking-wider">⚙️ HESAP AYARLARI</Link>
               <hr className="border-gray-50" />
               <button className="w-full text-left px-4 py-3 text-[11px] font-black text-red-600 hover:bg-red-50 transition uppercase tracking-wider">🚪 GÜVENLİ ÇIKIŞ</button>
