@@ -40,7 +40,7 @@ function Discover() {
             </button>
             {isProfileOpen && (
               <div className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50">
-                <Link to="/settings" className="block px-4 py-3 text-[11px] font-black text-gray-700 hover:bg-green-50 transition uppercase tracking-wider">⚙️ Ayarlar</Link>
+                <Link to="/account-settings" className="block px-4 py-3 text-[11px] font-black text-gray-700 hover:bg-green-50 transition uppercase tracking-wider">⚙️ Ayarlar</Link>
                 <button className="w-full text-left px-4 py-3 text-[11px] font-black text-red-600 hover:bg-red-50 transition uppercase">🚪 Çıkış</button>
               </div>
             )}

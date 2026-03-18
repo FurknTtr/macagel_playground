@@ -4,6 +4,7 @@ import SignUp from "../pages/SignUp";
 import Menu from "../pages/Menu";
 import MatchList from "../pages/MatchList";
 import Match from "../pages/Match";
+import AccountSettings from "../pages/AccountSettings";
 import App from "../App";
 
 // İleride farklı sayfalar geldikçe buraya ekleyeceğiz (Örn: Home, Register)
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
       {
         path: "/discover",
         element: <MatchList />,
+      },
+      {
+        path: "/account-settings",
+        element: <AccountSettings />,
       },
       {
         // :id parametresi ile her maçın kendi sayfasına gitmesini sağlıyoruz

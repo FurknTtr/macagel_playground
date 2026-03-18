@@ -7,21 +7,39 @@ function Match() {
   const [matchFormat, setMatchFormat] = useState("7v7"); // 6v6 veya 7v7
   const [positions, setPositions] = useState(initialSevenPositions);
 
-  // Şık Modal State'leri
+  // Şık Modal ve Popover State'leri
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: "", posId: null, posUser: "", posRole: "" });
+  const [activePopover, setActivePopover] = useState(null);
 
   // Format değiştiğinde pozisyonları sıfırla veya yeniden yükle
   useEffect(() => {
     if (matchFormat === "6v6") {
-      setPositions(initialSixPositions);
+      const mockSix = [...initialSixPositions];
+      mockSix[0] = { ...mockSix[0], user: "Fatih K.", stats: { matches: 42, rating: '4.9' } };
+      mockSix[5] = { ...mockSix[5], user: "Ahmet Y.", stats: { matches: 15, rating: '3.8' } };
+      setPositions(mockSix);
     } else {
-      setPositions(initialSevenPositions);
+      const mockSeven = [...initialSevenPositions];
+      mockSeven[0] = { ...mockSeven[0], user: "Fatih K.", stats: { matches: 42, rating: '4.9' } };
+      mockSeven[6] = { ...mockSeven[6], user: "Ahmet Y.", stats: { matches: 15, rating: '3.8' } };
+      setPositions(mockSeven);
     }
+    setActivePopover(null);
   }, [matchFormat]);
 
   const handleJoin = (id) => {
     const targetPos = positions.find(p => p.id === id);
     const userAlreadyInAction = positions.some(p => p.user.includes("Sen") && p.id !== id);
+
+    // Dolu bir oyuncuya (Kendisi veya boş değilse) tıklanırsa popover'ı yönet
+    if (targetPos.user !== "Boş" && !targetPos.user.includes("Sen")) {
+      // Açık popover'a tekrar tıklandıysa kapat, değilse aç
+      setActivePopover(prev => (prev === id ? null : id));
+      return;
+    }
+
+    // Boş veya kendisine ait bir yere tıklandığında popover açıksa kapat
+    if (activePopover) setActivePopover(null);
 
     // Eğer mevki boşsa
     if (targetPos.user === "Boş") {
@@ -69,22 +87,105 @@ function Match() {
       <div className="flex-1 flex flex-col lg:flex-row p-6 lg:p-12 gap-12 max-w-[1400px] mx-auto w-full items-start justify-center">
         
         {/* SOL: SAHA GÖRÜNÜMÜ */}
-        <div className="relative w-full max-w-2xl aspect-[2/3] lg:aspect-[3/4] bg-green-700 rounded-3xl border-4 border-white/20 shadow-2xl overflow-hidden flex-shrink-0">
+        <div className="relative w-full max-w-2xl aspect-[2/3] lg:aspect-[3/4] bg-green-700 rounded-3xl border-4 border-white/20 shadow-2xl flex-shrink-0">
           
-          {/* Saha Çizgileri (CSS ile basit saha tasarımı) */}
-          <div className="absolute top-0 left-0 w-full h-full border-2 border-white/10 m-2 rounded-2xl pointer-events-none"></div>
-          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/10 pointer-events-none"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-white/10 rounded-full pointer-events-none"></div>
-          
-          {/* Ceza Sahaları */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1/6 border-2 border-white/10 border-t-0 pointer-events-none"></div>
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1/6 border-2 border-white/10 border-b-0 pointer-events-none"></div>
+          {/* Saha Çizgileri (Taşıp Dışarı Çıkmaması İçin Gizleyici Sarıcı) */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[1.3rem]">
+            <div className="absolute top-0 left-0 w-full h-full border-2 border-white/10 m-2 rounded-2xl"></div>
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/10"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-white/10 rounded-full"></div>
+            
+            {/* Ceza Sahaları */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1/6 border-2 border-white/10 border-t-0"></div>
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1/6 border-2 border-white/10 border-b-0"></div>
+          </div>
 
           {/* Pozisyonlar / Formalar */}
           {matchFormat === "6v6" 
             ? <SixPosition positions={positions} handleJoin={handleJoin} />
             : <SevenPosition positions={positions} handleJoin={handleJoin} />
           }
+
+          {/* --- AKTİF POPOVER (Mesaj Baloncuğu) --- */}
+          {activePopover && (() => {
+            const pos = positions.find(p => p.id === activePopover);
+            if (!pos) return null;
+            const isRightSide = parseInt(pos.left) > 50;
+            const topPercent = parseInt(pos.top);
+
+            let yAlignClass = "-translate-y-1/2"; 
+            let arrowAlignClass = "top-1/2 -translate-y-1/2";
+            
+            if (topPercent <= 20) {
+                yAlignClass = "top-0 -mt-4"; 
+                arrowAlignClass = "top-4"; 
+            } else if (topPercent >= 80) {
+                yAlignClass = "bottom-0 -mb-4"; 
+                arrowAlignClass = "bottom-4"; 
+            }
+
+            return (
+              <div 
+                key={`popover-${pos.id}`}
+                className="absolute z-50 flex pointer-events-none"
+                style={{ top: pos.top, left: pos.left }}
+              >
+                <div className={`pointer-events-auto absolute flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200
+                  ${isRightSide ? "right-full mr-5 sm:mr-7" : "left-full ml-5 sm:ml-7"}
+                  ${yAlignClass}`}
+                >
+                  {/* Baloncuk Oku (Mutlak Konumlandırma) */}
+                  <div className={`absolute w-0 h-0 border-y-[8px] border-y-transparent z-[51] drop-shadow-2xl
+                    ${isRightSide ? "border-l-[8px] border-l-gray-800 -right-[8px]" : "border-r-[8px] border-r-gray-800 -left-[8px]"} 
+                    ${arrowAlignClass}`}>
+                  </div>
+
+                  {/* Yatay Tasarımlı Baloncuk İçeriği */}
+                  <div className="bg-gray-800 border border-gray-600 rounded-2xl p-4 w-[280px] sm:w-[320px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex flex-col gap-3 relative z-50">
+                    
+                    {/* Üst Bilgi ve Profil (Yan Yana) */}
+                    <div className="flex items-center gap-4">
+                      <img src={`https://ui-avatars.com/api/?name=${pos.user}&background=059669&color=fff&size=56`} alt="profil" className="w-14 h-14 rounded-full border-2 border-gray-500 shadow-sm flex-shrink-0" />
+                      
+                      <div className="flex flex-col flex-1">
+                        <div className="flex flex-col mb-1:5">
+                            <span className="text-white font-black text-sm leading-tight uppercase tracking-tight line-clamp-1">{pos.user}</span>
+                            <span className="text-green-400 text-[10px] font-bold uppercase tracking-widest leading-none">{pos.role}</span>
+                        </div>
+                        
+                        {/* İstatistikler */}
+                        <div className="flex gap-4 bg-gray-900/60 rounded-lg p-2 border border-gray-700/50 mt-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">Maç</span>
+                            <span className="text-white font-black text-xs">{pos.stats?.matches || 15}</span>
+                          </div>
+                          <div className="w-px h-3.5 bg-gray-600/50 self-center"></div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">Puan</span>
+                            <span className="text-yellow-500 font-black text-xs">{pos.stats?.rating || '4.2'}★</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Aksiyon Butonları (Yatay Tek Satır) */}
+                    <div className="flex gap-2 w-full">
+                      <button className="flex-1 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                        <span>🫂</span> <span className="hidden sm:inline">Ekle</span>
+                      </button>
+                      <button className="flex-1 bg-blue-900/40 hover:bg-blue-600 active:bg-blue-500 text-blue-100 text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm outline outline-1 outline-blue-800/50 flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                        <span>🔄</span> <span className="hidden sm:inline">Değiş</span>
+                      </button>
+                      {/* Yönetici Butonu */}
+                      <button className="flex-1 bg-red-900/30 hover:bg-red-600 active:bg-red-500 text-red-100 text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm outline outline-1 outline-red-900/50 flex items-center justify-center gap-1.5 uppercase tracking-wider title-attr" title="Odadan At (Yönetici)">
+                        <span>⛔</span> <span className="hidden sm:inline">Kick</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* SAĞ: MAÇ DETAYLARI & AKSİYON */}
