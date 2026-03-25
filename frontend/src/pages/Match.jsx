@@ -1,31 +1,131 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import SixPosition, { initialSixPositions } from "../components/PositionBoxes/sixPosition";
-import SevenPosition, { initialSevenPositions } from "../components/PositionBoxes/sevenPosition";
+import SixPosition, { 
+  initialSixPositions,
+  formation_1_2_2_1,
+  formation_1_1_3_1,
+  formation_1_1_2_2,
+  formation_1_2_1_2,
+  formationDefinitions as sixFormationDefinitions
+} from "../components/PositionBoxes/sixPosition";
+import SevenPosition, { 
+  initialSevenPositions,
+  formationDefinitions as sevenFormationDefinitions,
+  formation_1_3_2_1,
+  formation_1_2_3_1,
+  formation_1_2_2_2,
+  formation_1_1_4_1
+} from "../components/PositionBoxes/sevenPosition";
+import EightPosition, {
+  initialEightPositions,
+  eightFormationDefinitions,
+  formation_1_3_3_1,
+  formation_1_3_2_2,
+  formation_1_2_3_2,
+  formation_1_2_2_3
+} from "../components/PositionBoxes/eightPosition";
 
 function Match() {
-  const [matchFormat, setMatchFormat] = useState("7v7"); // 6v6 veya 7v7
+  const [matchFormat, setMatchFormat] = useState("7v7"); // 6v6 veya 7v7 veya 8v8
+  const [teamAFormation6v6, setTeamAFormation6v6] = useState("1-2-2-1"); // 6v6 A Takımı
+  const [teamBFormation6v6, setTeamBFormation6v6] = useState("1-2-2-1"); // 6v6 B Takımı
+  const [teamAFormation7v7, setTeamAFormation7v7] = useState("1-2-2-2"); // 7v7 A Takımı
+  const [teamBFormation7v7, setTeamBFormation7v7] = useState("1-2-2-2"); // 7v7 B Takımı
+  const [teamAFormation8v8, setTeamAFormation8v8] = useState("1-3-3-1"); // 8v8 A Takımı
+  const [teamBFormation8v8, setTeamBFormation8v8] = useState("1-3-3-1"); // 8v8 B Takımı
   const [positions, setPositions] = useState(initialSevenPositions);
 
   // Şık Modal ve Popover State'leri
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: "", posId: null, posUser: "", posRole: "" });
   const [activePopover, setActivePopover] = useState(null);
 
-  // Format değiştiğinde pozisyonları sıfırla veya yeniden yükle
+  // 6v6 Formasyon seçimine göre pozisyon datasını getir
+  const getFormationData6v6 = (formation) => {
+    switch(formation) {
+      case "1-1-3-1":
+        return formation_1_1_3_1;
+      case "1-1-2-2":
+        return formation_1_1_2_2;
+      case "1-2-1-2":
+        return formation_1_2_1_2;
+      default: // 1-2-2-1
+        return formation_1_2_2_1;
+    }
+  };
+
+  // 7v7 Formasyon seçimine göre pozisyon datasını getir
+  const getFormationData7v7 = (formation) => {
+    switch(formation) {
+      case "1-3-2-1":
+        return formation_1_3_2_1;
+      case "1-2-3-1":
+        return formation_1_2_3_1;
+      case "1-1-4-1":
+        return formation_1_1_4_1;
+      default: // 1-2-2-2
+        return formation_1_2_2_2;
+    }
+  };
+
+  // 8v8 Formasyon seçimine göre pozisyon datasını getir
+  const getFormationData8v8 = (formation) => {
+    switch(formation) {
+      case "1-3-2-2":
+        return formation_1_3_2_2;
+      case "1-2-3-2":
+        return formation_1_2_3_2;
+      case "1-2-2-3":
+        return formation_1_2_2_3;
+      default: // 1-3-3-1
+        return formation_1_3_3_1;
+    }
+  };
+
+  // Format veya formasyon değiştiğinde pozisyonları sıfırla veya yeniden yükle
   useEffect(() => {
     if (matchFormat === "6v6") {
-      const mockSix = [...initialSixPositions];
+      // A Takımı ve B Takımı için farklı formasyonlar
+      const teamAData = getFormationData6v6(teamAFormation6v6);
+      const teamBData = getFormationData6v6(teamBFormation6v6);
+      
+      // A Takımı (id 1-6) ve B Takımı (id 7-12) verilerini birleştir
+      const mockSix = [
+        ...teamAData.slice(0, 6),
+        ...teamBData.slice(6, 12)
+      ];
+      
       mockSix[0] = { ...mockSix[0], user: "Fatih K.", stats: { matches: 42, rating: '4.9' } };
       mockSix[5] = { ...mockSix[5], user: "Ahmet Y.", stats: { matches: 15, rating: '3.8' } };
       setPositions(mockSix);
-    } else {
-      const mockSeven = [...initialSevenPositions];
+    } else if (matchFormat === "7v7") {
+      // A Takımı ve B Takımı için farklı formasyonlar
+      const teamAData = getFormationData7v7(teamAFormation7v7);
+      const teamBData = getFormationData7v7(teamBFormation7v7);
+      
+      // A Takımı (id 1-7) ve B Takımı (id 8-14) verilerini birleştir
+      const mockSeven = [
+        ...teamAData.slice(0, 7),
+        ...teamBData.slice(7, 14)
+      ];
+      
       mockSeven[0] = { ...mockSeven[0], user: "Fatih K.", stats: { matches: 42, rating: '4.9' } };
       mockSeven[6] = { ...mockSeven[6], user: "Ahmet Y.", stats: { matches: 15, rating: '3.8' } };
       setPositions(mockSeven);
+    } else if (matchFormat === "8v8") {
+      const teamAData = getFormationData8v8(teamAFormation8v8);
+      const teamBData = getFormationData8v8(teamBFormation8v8);
+      const mockEight = [
+        ...teamAData.slice(0, 8),
+        ...teamBData.slice(8, 16)
+      ];
+      
+      mockEight[0] = { ...mockEight[0], user: "Fatih K.", stats: { matches: 42, rating: '4.9' } };
+      mockEight[7] = { ...mockEight[7], user: "Ahmet Y.", stats: { matches: 15, rating: '3.8' } };
+      setPositions(mockEight);
     }
+
     setActivePopover(null);
-  }, [matchFormat]);
+  }, [matchFormat, teamAFormation6v6, teamBFormation6v6, teamAFormation7v7, teamBFormation7v7, teamAFormation8v8, teamBFormation8v8]);
 
   const handleJoin = (id) => {
     const targetPos = positions.find(p => p.id === id);
@@ -68,7 +168,7 @@ function Match() {
     setConfirmModal({ isOpen: false, type: "", posId: null });
   };
 
-  const totalPlayers = matchFormat === "6v6" ? 12 : 14;
+  const totalPlayers = matchFormat === "6v6" ? 12 : matchFormat === "7v7" ? 14 : 16;
   const emptySpots = positions.filter(p => p.user === "Boş").length;
 
   return (
@@ -103,7 +203,9 @@ function Match() {
           {/* Pozisyonlar / Formalar */}
           {matchFormat === "6v6" 
             ? <SixPosition positions={positions} handleJoin={handleJoin} />
-            : <SevenPosition positions={positions} handleJoin={handleJoin} />
+            : matchFormat === "7v7"
+              ? <SevenPosition positions={positions} handleJoin={handleJoin} />
+              : <EightPosition positions={positions} handleJoin={handleJoin} />
           }
 
           {/* --- AKTİF POPOVER (Mesaj Baloncuğu) --- */}
@@ -210,8 +312,149 @@ function Match() {
                 >
                   7 vs 7
                 </button>
+                <button 
+                  onClick={() => setMatchFormat("8v8")}
+                  className={`flex-1 py-2 rounded-lg text-xs font-black transition-all ${matchFormat === "8v8" ? "bg-green-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-gray-700"}`}
+                >
+                  8 vs 8
+                </button>
               </div>
             </div>
+
+            {/* ODA YÖNETİCİSİ: 6v6 FORMASYON SEÇİMİ - A TAKIMI */}
+            {matchFormat === "6v6" && (
+              <>
+                <div className="mb-6 bg-gray-900 border border-red-900/50 rounded-2xl p-4">
+                  <label className="text-[10px] font-black text-red-500 uppercase tracking-widest block mb-3 text-center">🔴 A TAKIMI - Formasyon Seç</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(sixFormationDefinitions).map(([key, formation]) => (
+                      <button
+                        key={`teamA6v6-${key}`}
+                        onClick={() => setTeamAFormation6v6(key)}
+                        className={`p-3 rounded-xl text-xs font-black transition-all ${
+                          teamAFormation6v6 === key 
+                            ? "bg-red-600 text-white shadow-md" 
+                            : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
+                        }`}
+                      >
+                        <div className="text-center font-black">{key}</div>
+                        <div className="text-[8px] text-opacity-80">{formation.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-6 bg-gray-900 border border-blue-900/50 rounded-2xl p-4">
+                  <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest block mb-3 text-center">🔵 B TAKIMI - Formasyon Seç</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(sixFormationDefinitions).map(([key, formation]) => (
+                      <button
+                        key={`teamB6v6-${key}`}
+                        onClick={() => setTeamBFormation6v6(key)}
+                        className={`p-3 rounded-xl text-xs font-black transition-all ${
+                          teamBFormation6v6 === key 
+                            ? "bg-blue-600 text-white shadow-md" 
+                            : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
+                        }`}
+                      >
+                        <div className="text-center font-black">{key}</div>
+                        <div className="text-[8px] text-opacity-80">{formation.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ODA YÖNETİCİSİ: 8v8 FORMASYON SEÇİMİ - A TAKIMI */}
+            {matchFormat === "8v8" && (
+              <>
+                <div className="mb-6 bg-gray-900 border border-red-900/50 rounded-2xl p-4">
+                  <label className="text-[10px] font-black text-red-500 uppercase tracking-widest block mb-3 text-center">🔴 A TAKIMI - 8v8 Formasyon Seç</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(eightFormationDefinitions).map(([key, formation]) => (
+                      <button
+                        key={`teamA8v8-${key}`}
+                        onClick={() => setTeamAFormation8v8(key)}
+                        className={`p-3 rounded-xl text-xs font-black transition-all ${
+                          teamAFormation8v8 === key 
+                            ? "bg-red-600 text-white shadow-md" 
+                            : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
+                        }`}
+                      >
+                        <div className="text-center font-black">{key}</div>
+                        <div className="text-[8px] text-opacity-80">{formation.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-6 bg-gray-900 border border-blue-900/50 rounded-2xl p-4">
+                  <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest block mb-3 text-center">🔵 B TAKIMI - 8v8 Formasyon Seç</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(eightFormationDefinitions).map(([key, formation]) => (
+                      <button
+                        key={`teamB8v8-${key}`}
+                        onClick={() => setTeamBFormation8v8(key)}
+                        className={`p-3 rounded-xl text-xs font-black transition-all ${
+                          teamBFormation8v8 === key 
+                            ? "bg-blue-600 text-white shadow-md" 
+                            : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
+                        }`}
+                      >
+                        <div className="text-center font-black">{key}</div>
+                        <div className="text-[8px] text-opacity-80">{formation.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ODA YÖNETİCİSİ: 7v7 FORMASYON SEÇİMİ - A TAKIMI */}
+            {matchFormat === "7v7" && (
+              <>
+                <div className="mb-6 bg-gray-900 border border-red-900/50 rounded-2xl p-4">
+                  <label className="text-[10px] font-black text-red-500 uppercase tracking-widest block mb-3 text-center">🔴 A TAKIMI - Formasyon Seç</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(sevenFormationDefinitions).map(([key, formation]) => (
+                      <button
+                        key={`teamA7v7-${key}`}
+                        onClick={() => setTeamAFormation7v7(key)}
+                        className={`p-3 rounded-xl text-xs font-black transition-all ${
+                          teamAFormation7v7 === key 
+                            ? "bg-red-600 text-white shadow-md" 
+                            : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
+                        }`}
+                      >
+                        <div className="text-center font-black">{key}</div>
+                        <div className="text-[8px] text-opacity-80">{formation.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-6 bg-gray-900 border border-blue-900/50 rounded-2xl p-4">
+                  <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest block mb-3 text-center">🔵 B TAKIMI - Formasyon Seç</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(sevenFormationDefinitions).map(([key, formation]) => (
+                      <button
+                        key={`teamB7v7-${key}`}
+                        onClick={() => setTeamBFormation7v7(key)}
+                        className={`p-3 rounded-xl text-xs font-black transition-all ${
+                          teamBFormation7v7 === key 
+                            ? "bg-blue-600 text-white shadow-md" 
+                            : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
+                        }`}
+                      >
+                        <div className="text-center font-black">{key}</div>
+                        <div className="text-[8px] text-opacity-80">{formation.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="space-y-4 mb-8">
                <div className="flex justify-between border-b border-gray-700 pb-2">

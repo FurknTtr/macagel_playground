@@ -1,24 +1,103 @@
 import React from "react";
 
-export const initialSevenPositions = [
-  // A Takımı (Üst Yarı) - 7 Kişi
+// Formasyon Tanımları
+export const formationDefinitions = {
+  "1-3-2-1": {
+    name: "1-3-2-1 (Defansif)",
+    description: "Kaleci-3 Defans-2 Orta-1 Forvet"
+  },
+  "1-2-3-1": {
+    name: "1-2-3-1 (Dengeli)",
+    description: "Kaleci-2 Defans-3 Orta-1 Forvet"
+  },
+  "1-2-2-2": {
+    name: "1-2-2-2 (Ofansif)",
+    description: "Kaleci-2 Defans-2 Orta-2 Forvet"
+  },
+  "1-1-4-1": {
+    name: "1-1-4-1 (Çok Defansif)",
+    description: "Kaleci-1 Defans-4 Orta-1 Forvet"
+  }
+};
+
+// 1-3-2-1 Formasyonu
+export const formation_1_3_2_1 = [
   { id: 1, team: "A", role: "Kaleci", user: "Boş", top: "8%", left: "50%" },
-  { id: 2, team: "A", role: "Defans", user: "Boş", top: "16%", left: "20%" },
-  { id: 3, team: "A", role: "Defans", user: "Boş", top: "16%", left: "80%" },
-  { id: 4, team: "A", role: "Orta", user: "Boş", top: "26%", left: "50%" },
-  { id: 5, team: "A", role: "Açık", user: "Boş", top: "33%", left: "15%" },
-  { id: 6, team: "A", role: "Açık", user: "Boş", top: "33%", left: "85%" },
+  { id: 2, team: "A", role: "Defans", user: "Boş", top: "18%", left: "25%" },
+  { id: 3, team: "A", role: "Defans", user: "Boş", top: "18%", left: "50%" },
+  { id: 4, team: "A", role: "Defans", user: "Boş", top: "18%", left: "75%" },
+  { id: 5, team: "A", role: "Orta", user: "Boş", top: "30%", left: "35%" },
+  { id: 6, team: "A", role: "Orta", user: "Boş", top: "30%", left: "65%" },
   { id: 7, team: "A", role: "Forvet", user: "Boş", top: "40%", left: "50%" },
   
-  // B Takımı (Alt Yarı) - 7 Kişi
   { id: 8, team: "B", role: "Forvet", user: "Boş", top: "60%", left: "50%" },
-  { id: 9, team: "B", role: "Açık", user: "Boş", top: "67%", left: "15%" },
-  { id: 10, team: "B", role: "Açık", user: "Boş", top: "67%", left: "85%" },
-  { id: 11, team: "B", role: "Orta", user: "Boş", top: "74%", left: "50%" },
-  { id: 12, team: "B", role: "Defans", user: "Boş", top: "84%", left: "20%" },
-  { id: 13, team: "B", role: "Defans", user: "Boş", top: "84%", left: "80%" },
+  { id: 9, team: "B", role: "Orta", user: "Boş", top: "70%", left: "35%" },
+  { id: 10, team: "B", role: "Orta", user: "Boş", top: "70%", left: "65%" },
+  { id: 11, team: "B", role: "Defans", user: "Boş", top: "82%", left: "25%" },
+  { id: 12, team: "B", role: "Defans", user: "Boş", top: "82%", left: "50%" },
+  { id: 13, team: "B", role: "Defans", user: "Boş", top: "82%", left: "75%" },
   { id: 14, team: "B", role: "Kaleci", user: "Boş", top: "92%", left: "50%" }
 ];
+
+// 1-2-3-1 Formasyonu
+export const formation_1_2_3_1 = [
+  { id: 1, team: "A", role: "Kaleci", user: "Boş", top: "8%", left: "50%" },
+  { id: 2, team: "A", role: "Defans", user: "Boş", top: "18%", left: "35%" },
+  { id: 3, team: "A", role: "Defans", user: "Boş", top: "18%", left: "65%" },
+  { id: 4, team: "A", role: "Orta", user: "Boş", top: "28%", left: "25%" },
+  { id: 5, team: "A", role: "Orta", user: "Boş", top: "28%", left: "50%" },
+  { id: 6, team: "A", role: "Orta", user: "Boş", top: "28%", left: "75%" },
+  { id: 7, team: "A", role: "Forvet", user: "Boş", top: "40%", left: "50%" },
+  
+  { id: 8, team: "B", role: "Forvet", user: "Boş", top: "60%", left: "50%" },
+  { id: 9, team: "B", role: "Orta", user: "Boş", top: "72%", left: "25%" },
+  { id: 10, team: "B", role: "Orta", user: "Boş", top: "72%", left: "50%" },
+  { id: 11, team: "B", role: "Orta", user: "Boş", top: "72%", left: "75%" },
+  { id: 12, team: "B", role: "Defans", user: "Boş", top: "82%", left: "35%" },
+  { id: 13, team: "B", role: "Defans", user: "Boş", top: "82%", left: "65%" },
+  { id: 14, team: "B", role: "Kaleci", user: "Boş", top: "92%", left: "50%" }
+];
+
+// 1-2-2-2 Formasyonu (Standart)
+export const formation_1_2_2_2 = [
+  { id: 1, team: "A", role: "Kaleci", user: "Boş", top: "8%", left: "50%" },
+  { id: 2, team: "A", role: "Defans", user: "Boş", top: "18%", left: "35%" },
+  { id: 3, team: "A", role: "Defans", user: "Boş", top: "18%", left: "65%" },
+  { id: 4, team: "A", role: "Orta", user: "Boş", top: "27%", left: "25%" },
+  { id: 5, team: "A", role: "Orta", user: "Boş", top: "27%", left: "75%" },
+  { id: 6, team: "A", role: "Açık", user: "Boş", top: "35%", left: "35%" },
+  { id: 7, team: "A", role: "Açık", user: "Boş", top: "35%", left: "65%" },
+  
+  { id: 8, team: "B", role: "Açık", user: "Boş", top: "65%", left: "35%" },
+  { id: 9, team: "B", role: "Açık", user: "Boş", top: "65%", left: "65%" },
+  { id: 10, team: "B", role: "Orta", user: "Boş", top: "73%", left: "25%" },
+  { id: 11, team: "B", role: "Orta", user: "Boş", top: "73%", left: "75%" },
+  { id: 12, team: "B", role: "Defans", user: "Boş", top: "82%", left: "35%" },
+  { id: 13, team: "B", role: "Defans", user: "Boş", top: "82%", left: "65%" },
+  { id: 14, team: "B", role: "Kaleci", user: "Boş", top: "92%", left: "50%" }
+];
+
+// 1-1-4-1 Formasyonu
+export const formation_1_1_4_1 = [
+  { id: 1, team: "A", role: "Kaleci", user: "Boş", top: "8%", left: "50%" },
+  { id: 2, team: "A", role: "Defans", user: "Boş", top: "18%", left: "50%" },
+  { id: 3, team: "A", role: "Orta", user: "Boş", top: "28%", left: "15%" },
+  { id: 4, team: "A", role: "Orta", user: "Boş", top: "28%", left: "35%" },
+  { id: 5, team: "A", role: "Orta", user: "Boş", top: "28%", left: "65%" },
+  { id: 6, team: "A", role: "Orta", user: "Boş", top: "28%", left: "85%" },
+  { id: 7, team: "A", role: "Forvet", user: "Boş", top: "40%", left: "50%" },
+  
+  { id: 8, team: "B", role: "Forvet", user: "Boş", top: "60%", left: "50%" },
+  { id: 9, team: "B", role: "Orta", user: "Boş", top: "72%", left: "15%" },
+  { id: 10, team: "B", role: "Orta", user: "Boş", top: "72%", left: "35%" },
+  { id: 11, team: "B", role: "Orta", user: "Boş", top: "72%", left: "65%" },
+  { id: 12, team: "B", role: "Orta", user: "Boş", top: "72%", left: "85%" },
+  { id: 13, team: "B", role: "Defans", user: "Boş", top: "82%", left: "50%" },
+  { id: 14, team: "B", role: "Kaleci", user: "Boş", top: "92%", left: "50%" }
+];
+
+// Standart olarak 1-2-2-2 kullan
+export const initialSevenPositions = formation_1_2_2_2;
 
 export default function SevenPosition({ positions, handleJoin }) {
   return (
