@@ -7,16 +7,12 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 require('dotenv').config();
-const connectDB = require('./app_macagel/config/db'); 
+const connectDB = require('./app_macagel/configs/db'); 
 
 connectDB(); // Veritabanına bağlanma işlemini başlattık!
 
-var express = require('express');
-var path = require('path');
-
 // 2. İŞTE BİZİM EKLEDİĞİMİZ SATIR: Kendi router dosyamızı içeri alıyoruz.
-// (Dosya adını ne koyduysan onu yaz, ben macaGelRoutes.js varsaydım)
-var macaGelRouter = require('./app_macagel/routes/macaGelRoutes');
+var macaGelRouter = require('./app_macagel/routes/index');
 
 var app = express();
 
