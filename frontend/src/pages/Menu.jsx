@@ -7,9 +7,9 @@ function Menu() {
 
   // VERİLER (Eksiksiz tam kadro)
   const [matches, setMatches] = useState([
-    { id: 1, title: "Pazartesi Gecesi Halı Saha", location: "Isparta / Merkez", date: "23 Mart", time: "21:00", capacity: "12/14", isOwner: true, type: "upcoming" },
-    { id: 2, title: "SDU Batı Sahası Maçı", location: "SDU Sahaları", date: "25 Mart", time: "19:00", capacity: "10/14", isOwner: false, type: "upcoming" },
-    { id: 3, title: "Efsane Cuma Kapışması", location: "Arena Park", date: "10 Mart", time: "22:00", score: "7 - 5", isOwner: false, type: "past" },
+    { id: 1, title: "Pazartesi Gecesi Halı Saha", manager: "Furkan Tatar", location: "Isparta / Merkez", date: "23 Mart", time: "21:00", capacity: "12/14", isOwner: true, type: "upcoming" },
+    { id: 2, title: "SDU Batı Sahası Maçı", manager: "Deniz Yılmaz", location: "SDU Sahaları", date: "25 Mart", time: "19:00", capacity: "10/14", isOwner: false, type: "upcoming" },
+    { id: 3, title: "Efsane Cuma Kapışması", manager: "Murat Çelik", location: "Arena Park", date: "10 Mart", time: "22:00", score: "7 - 5", isOwner: false, type: "past" },
   ]);
 
   const [editingMatch, setEditingMatch] = useState(null);
@@ -40,6 +40,11 @@ function Menu() {
     setEditingMatch(null); // Modalı kapat
   };
 
+  const handleRemoveMatch = (matchId) => {
+    const confirmed = window.confirm("Bu maçı kaldırmak istediğine emin misin?");
+    if (!confirmed) return;
+    setMatches((prev) => prev.filter((m) => m.id !== matchId));
+  };
 
   //getFriends atılıcak
   const getFriends = () => {
@@ -119,6 +124,7 @@ function Menu() {
                     <h3 className="text-xl font-black text-gray-900 leading-tight uppercase tracking-tight group-hover:text-green-600 transition-colors">
                       {match.title}
                     </h3>
+                    <p className="text-xs text-gray-400 mt-1">Yönetici: {match.manager}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] font-black text-green-600 uppercase tracking-widest flex items-center justify-end gap-1">📍 {match.location}</p>
@@ -146,6 +152,14 @@ function Menu() {
                         className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest"
                       >
                         🛠️ YÖNET
+                      </button>
+                    )}
+                    {match.isOwner && (
+                      <button
+                        onClick={() => handleRemoveMatch(match.id)}
+                        className="bg-red-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black hover:bg-red-700 transition-all shadow-lg shadow-red-100 uppercase tracking-widest"
+                      >
+                        🗑️ MAÇI KALDIR
                       </button>
                     )}
                     {match.isOwner && (

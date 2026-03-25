@@ -7,14 +7,14 @@ function Discover() {
 
   // MOCK DATA: Sistemdeki tüm maçlar (Pazar Yeri)
   const [allMatches] = useState([
-    { id: 101, title: "Acil Forvet Aranıyor!", location: "Isparta / Batıkent Halısaha", date: "24 Mart", time: "20:00", capacity: "13/14", price: "150 TL" },
-    { id: 102, title: "Şirketler Arası Dostluk Maçı", location: "Isparta / SDÜ Halı Saha", date: "25 Mart", time: "18:00", capacity: "8/14", price: "Free" },
-    { id: 103, title: "Gece Kuşları Kapışıyor", location: "Isparta / Fatih Halısaha ", date: "26 Mart", time: "23:00", capacity: "10/14", price: "200 TL" },
-    { id: 104, title: "Haftalık Rutin Maç", location: "Isparta / Algida Halı Saha", date: "27 Mart", time: "21:00", capacity: "12/14", price: "180 TL" },
-    { id: 105, title: "Isparta Antrenman Maçı", location: "Isparta / Süleyman Demirel Stadyumu Halı Saha", date: "28 Mart", time: "19:00", capacity: "5/12", price: "120 TL" },
-    { id: 106, title: "Kadınlar Dostluk Turnuvası", location: "Isparta / Kılıçarslan Halı Saha", date: "29 Mart", time: "17:30", capacity: "9/14", price: "Free" },
-    { id: 107, title: "Hafta Sonu 6v6 Eğlence", location: "Isparta / Karacaören Halı Saha", date: "30 Mart", time: "16:00", capacity: "6/12", price: "100 TL" },
-    { id: 108, title: "Akşam Çim Ligi", location: "Isparta / Sorkun Halı Saha", date: "31 Mart", time: "21:00", capacity: "11/14", price: "140 TL" },
+    { id: 101, title: "Acil Forvet Aranıyor!", manager: "Furkan Tatar", location: "Isparta / Batıkent Halısaha", date: "24 Mart", time: "20:00", capacity: "13/14", price: "150 TL" },
+    { id: 102, title: "Şirketler Arası Dostluk Maçı", manager: "Deniz Yılmaz", location: "Isparta / SDÜ Halı Saha", date: "25 Mart", time: "18:00", capacity: "8/14", price: "Free" },
+    { id: 103, title: "Gece Kuşları Kapışıyor", manager: "Sibel Aksoy", location: "Isparta / Fatih Halısaha ", date: "26 Mart", time: "23:00", capacity: "10/14", price: "200 TL" },
+    { id: 104, title: "Haftalık Rutin Maç", manager: "Murat Çelik", location: "Isparta / Algida Halı Saha", date: "27 Mart", time: "21:00", capacity: "12/14", price: "180 TL" },
+    { id: 105, title: "Isparta Antrenman Maçı", manager: "Esra Kaya", location: "Isparta / Süleyman Demirel Stadyumu Halı Saha", date: "28 Mart", time: "19:00", capacity: "5/12", price: "120 TL" },
+    { id: 106, title: "Kadınlar Dostluk Turnuvası", manager: "Gizem Öz", location: "Isparta / Kılıçarslan Halı Saha", date: "29 Mart", time: "17:30", capacity: "9/14", price: "Free" },
+    { id: 107, title: "Hafta Sonu 6v6 Eğlence", manager: "Ali Yıldız", location: "Isparta / Karacaören Halı Saha", date: "30 Mart", time: "16:00", capacity: "6/12", price: "100 TL" },
+    { id: 108, title: "Akşam Çim Ligi", manager: "Leyla Demir", location: "Isparta / Sorkun Halı Saha", date: "31 Mart", time: "21:00", capacity: "11/14", price: "140 TL" },
   ]);
 
   return (
@@ -67,12 +67,13 @@ function Discover() {
             {allMatches.map((match) => (
               <div key={match.id} className="bg-white rounded-3xl border border-gray-100 p-7 transition-all shadow-sm hover:shadow-xl hover:border-green-300 group">
                 
-                {/* Üst Satır: Başlık | Konum & Tarih */}
+                {/* Üst Satır: Başlık | Yönetici | Konum & Tarih */}
                 <div className="flex justify-between items-start mb-10">
                   <div className="max-w-[70%]">
                     <h3 className="text-xl font-black text-gray-900 group-hover:text-green-600 transition-colors uppercase italic">
                       {match.title}
                     </h3>
+                    <p className="text-xs text-gray-400 mt-1">Yönetici: {match.manager}</p>
                   </div>
                   <div className="text-right">
                     <Link
