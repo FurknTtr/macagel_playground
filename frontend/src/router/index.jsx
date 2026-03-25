@@ -4,6 +4,8 @@ import SignUp from "../pages/SignUp";
 import Menu from "../pages/Menu";
 import MatchList from "../pages/MatchList";
 import Match from "../pages/Match";
+import CreateMatch from "../pages/CreateMatch";
+import Location from "../pages/Location";
 import AccountSettings from "../pages/AccountSettings";
 import App from "../App";
 
@@ -38,9 +40,17 @@ export const router = createBrowserRouter([
         element: <AccountSettings />,
       },
       {
+        path: "/create-match",
+        element: <CreateMatch />,
+      },
+      {
         // :id parametresi ile her maçın kendi sayfasına gitmesini sağlıyoruz
         path: "/match/:id",
         element: <Match />,
+      },
+      {
+        path: "/location/:id?",
+        element: <Location />,
       }
     ]
   }

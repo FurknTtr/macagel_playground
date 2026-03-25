@@ -41,6 +41,8 @@ const AccountSettings = () => {
 
     const handleUpdateProfile = (e) => {
         e.preventDefault();
+        
+        axios.put('/api/updateProfile', userInfo)
         // Profil güncelleme API çağrısı: PUT /api/updateProfile
         console.log("Profil güncelleniyor: ", userInfo);
         alert("Profil başarıyla güncellendi! :D");

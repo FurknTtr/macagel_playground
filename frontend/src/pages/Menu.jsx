@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 function Menu() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -13,6 +13,26 @@ function Menu() {
   ]);
 
   const [editingMatch, setEditingMatch] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.matchId && location.state?.selectedLocation) {
+      const matchId = location.state.matchId;
+      const selectedLocation = location.state.selectedLocation;
+
+      setMatches((prev) => prev.map((m) =>
+        m.id === matchId ? { ...m, location: selectedLocation } : m
+      ));
+
+      setEditingMatch((prev) =>
+        prev && prev.id === matchId ? { ...prev, location: selectedLocation } : prev
+      );
+
+      // state temizle
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   const handleSaveEdit = (e) => {
     e.preventDefault();
@@ -20,7 +40,13 @@ function Menu() {
     setEditingMatch(null); // Modalı kapat
   };
 
+
+  //getFriends atılıcak
+  const getFriends = () => {
+  };
+
   const friends = [
+    //friends den gelen veri bu degişkene konucak
     { name: "Ahmet Yılmaz", status: "online" },
     { name: "Rukiye", status: "online" },
     { name: "Mehmet Demir", status: "offline" },
@@ -38,7 +64,10 @@ function Menu() {
         <div className="flex items-center gap-10">
           <div className="text-2xl font-black text-green-600 italic tracking-tighter">MAÇA GEL</div>
           <Link to="/discover" className="hidden lg:block bg-green-50 text-green-700 px-5 py-2 rounded-full text-[10px] font-black hover:bg-green-600 hover:text-white transition-all uppercase tracking-widest border border-green-100 shadow-sm">
-            🔍 YENİ MAÇ BUL
+            🔍 MAÇ BUL
+          </Link>
+          <Link to="/create-match" className="hidden lg:block bg-blue-600 text-white px-5 py-2 rounded-full text-[10px] font-black hover:bg-blue-700 transition-all uppercase tracking-widest border border-blue-700 shadow-sm">
+            ➕ MAÇ OLUŞTUR
           </Link>
         </div>
         
@@ -110,10 +139,24 @@ function Menu() {
                     )}
                   </div>
 
-                  <div>
-                    {match.isOwner ? (
-                      <button onClick={() => setEditingMatch(match)} className="bg-blue-600 text-white px-7 py-3 rounded-2xl text-[10px] font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest inline-block text-center">🛠️ YÖNET</button>
-                    ) : match.type === 'upcoming' ? (
+                  <div className="flex gap-2 justify-end">
+                    {match.isOwner && (
+                      <button
+                        onClick={() => setEditingMatch(match)}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest"
+                      >
+                        🛠️ YÖNET
+                      </button>
+                    )}
+                    {match.isOwner && (
+                      <button
+                        onClick={() => navigate(`/location?matchId=${match.id}&q=${encodeURIComponent(match.location)}`)}
+                        className="bg-gray-100 text-gray-600 px-4 py-3 rounded-2xl text-[10px] font-black hover:bg-gray-200 transition-all uppercase tracking-widest"
+                      >
+                        🗺️ HARİTA
+                      </button>
+                    )}
+                    {match.isOwner ? null : match.type === 'upcoming' ? (
                       <Link to={`/match/${match.id}`} className="bg-gray-100 text-gray-600 px-7 py-3 rounded-2xl text-[10px] font-black hover:bg-gray-200 transition-all uppercase inline-block text-center">📄 DETAY</Link>
                     ) : (
                       <button className="bg-green-600 text-white px-7 py-3 rounded-2xl text-[10px] font-black hover:bg-green-700 transition shadow-lg shadow-green-100 uppercase">⭐ PUAN VER</button>

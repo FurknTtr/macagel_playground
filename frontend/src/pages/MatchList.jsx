@@ -7,10 +7,14 @@ function Discover() {
 
   // MOCK DATA: Sistemdeki tüm maçlar (Pazar Yeri)
   const [allMatches] = useState([
-    { id: 101, title: "Acil Forvet Aranıyor!", location: "Isparta / Işıklar", date: "24 Mart", time: "20:00", capacity: "13/14", price: "150 TL" },
-    { id: 102, title: "Şirketler Arası Dostluk Maçı", location: "SDU Doğu Sahası", date: "25 Mart", time: "18:00", capacity: "8/14", price: "Free" },
-    { id: 103, title: "Gece Kuşları Kapışıyor", location: "Arena Park", date: "26 Mart", time: "23:00", capacity: "10/14", price: "200 TL" },
-    { id: 104, title: "Haftalık Rutin Maç", location: "Eğirdir Sahası", date: "27 Mart", time: "21:00", capacity: "12/14", price: "180 TL" },
+    { id: 101, title: "Acil Forvet Aranıyor!", location: "Isparta / Batıkent Halısaha", date: "24 Mart", time: "20:00", capacity: "13/14", price: "150 TL" },
+    { id: 102, title: "Şirketler Arası Dostluk Maçı", location: "Isparta / SDÜ Halı Saha", date: "25 Mart", time: "18:00", capacity: "8/14", price: "Free" },
+    { id: 103, title: "Gece Kuşları Kapışıyor", location: "Isparta / Fatih Halısaha ", date: "26 Mart", time: "23:00", capacity: "10/14", price: "200 TL" },
+    { id: 104, title: "Haftalık Rutin Maç", location: "Isparta / Algida Halı Saha", date: "27 Mart", time: "21:00", capacity: "12/14", price: "180 TL" },
+    { id: 105, title: "Isparta Antrenman Maçı", location: "Isparta / Süleyman Demirel Stadyumu Halı Saha", date: "28 Mart", time: "19:00", capacity: "5/12", price: "120 TL" },
+    { id: 106, title: "Kadınlar Dostluk Turnuvası", location: "Isparta / Kılıçarslan Halı Saha", date: "29 Mart", time: "17:30", capacity: "9/14", price: "Free" },
+    { id: 107, title: "Hafta Sonu 6v6 Eğlence", location: "Isparta / Karacaören Halı Saha", date: "30 Mart", time: "16:00", capacity: "6/12", price: "100 TL" },
+    { id: 108, title: "Akşam Çim Ligi", location: "Isparta / Sorkun Halı Saha", date: "31 Mart", time: "21:00", capacity: "11/14", price: "140 TL" },
   ]);
 
   return (
@@ -71,7 +75,12 @@ function Discover() {
                     </h3>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-green-600 uppercase tracking-widest flex items-center justify-end gap-1 font-bold">📍 {match.location}</p>
+                    <Link
+                      to={`/location/${match.id}?q=${encodeURIComponent(match.location)}`}
+                      className="text-[10px] font-black text-green-600 uppercase tracking-widest flex items-center justify-end gap-1 font-bold hover:underline"
+                    >
+                      📍 {match.location}
+                    </Link>
                     <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-tighter italic">📅 {match.date}</p>
                   </div>
                 </div>

@@ -38,6 +38,7 @@ function Match() {
   // Şık Modal ve Popover State'leri
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: "", posId: null, posUser: "", posRole: "" });
   const [activePopover, setActivePopover] = useState(null);
+  const [selectedPlayerProfile, setSelectedPlayerProfile] = useState(null);
 
   // 6v6 Formasyon seçimine göre pozisyon datasını getir
   const getFormationData6v6 = (formation) => {
@@ -185,7 +186,78 @@ function Match() {
 
       {/* --- ANA ALAN --- */}
       <div className="flex-1 flex flex-col lg:flex-row p-6 lg:p-12 gap-12 max-w-[1400px] mx-auto w-full items-start justify-center">
-        
+      {selectedPlayerProfile && (
+        <aside className="fixed top-24 left-5 z-50 bg-slate-900/95 text-white w-80 rounded-2xl p-4 shadow-2xl border border-cyan-500/50">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <img
+                src={selectedPlayerProfile.avatar || "https://ui-avatars.com/api/?name=" + encodeURIComponent(selectedPlayerProfile.name)}
+                alt={selectedPlayerProfile.name}
+                className="w-12 h-12 rounded-full border-2 border-cyan-400"
+              />
+              <div>
+                <h3 className="text-lg font-black uppercase tracking-tight">{selectedPlayerProfile.name}</h3>
+                <p className="text-xs text-cyan-300">{selectedPlayerProfile.role} - {selectedPlayerProfile.team === "A" ? "A Takımı" : "B Takımı"}</p>
+              </div>
+            </div>
+            <button onClick={() => setSelectedPlayerProfile(null)} className="text-red-300 text-xs font-bold px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20">Kapat</button>
+          </div>
+
+          <div className="mt-4 text-sm text-gray-100">
+            <p className="font-bold">Telefon:</p>
+            <p>{selectedPlayerProfile.phone || "Kayıtlı değil"}</p>
+            <p className="font-bold mt-2">Yaş:</p>
+            <p>{selectedPlayerProfile.age || "Bilinmiyor"}</p>
+            <p className="font-bold mt-2">Oynadığı Maç:</p>
+            <p>{selectedPlayerProfile.matches || 12} maç</p>
+            <p className="mt-2 font-bold">Yorumlar:</p>
+            <ul className="list-disc list-inside space-y-1 text-[13px] text-gray-200">
+              {(selectedPlayerProfile.comments || []).length === 0 ? (
+                <li>Henüz yorum yok</li>
+              ) : (
+                selectedPlayerProfile.comments.map((comment, idx) => (
+                  <li key={idx}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlayerProfile({
+                        name: comment.author,
+                        role: "Yorumcu",
+                        team: "A",
+                        age: 27,
+                        phone: "+90 532 987 6543",
+                        game: "Ekstra Maç",
+                        location: "Isparta / Yorum Sahası",
+                        mmr: "1700",
+                        matches: 30,
+                        wins: 22,
+                        losses: 8,
+                        comments: [
+                          {author: "Simge K", text: "Harika bir kaptan."},
+                          {author: "Kerem O", text: "Takım oyunu çok güçlü."}
+                        ],
+                        rating: 4.5,
+                        avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(comment.author)
+                      })}
+                      className="font-black text-cyan-200 hover:underline"
+                    >
+                      {comment.author}
+                    </button>
+                    : {comment.text}
+                  </li>
+                ))
+              )}
+            </ul>
+            <p className="mt-3 font-bold">Yıldız Puanı:</p>
+            <div className="flex items-center gap-1">
+              {new Array(5).fill(0).map((_, i) => (
+                <span key={i} className={i < Math.round(selectedPlayerProfile.rating || 4) ? "text-yellow-300" : "text-gray-500"}>★</span>
+              ))}
+              <span className="text-xs text-gray-300 ml-2">{(selectedPlayerProfile.rating || 4.0).toFixed(1)}</span>
+            </div>
+          </div>
+        </aside>
+      )}
+
         {/* SOL: SAHA GÖRÜNÜMÜ */}
         <div className="relative w-full max-w-2xl aspect-[2/3] lg:aspect-[3/4] bg-green-700 rounded-3xl border-4 border-white/20 shadow-2xl flex-shrink-0">
           
@@ -277,6 +349,12 @@ function Match() {
                       </button>
                       <button className="flex-1 bg-blue-900/40 hover:bg-blue-600 active:bg-blue-500 text-blue-100 text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm outline outline-1 outline-blue-800/50 flex items-center justify-center gap-1.5 uppercase tracking-wider">
                         <span>🔄</span> <span className="hidden sm:inline">Değiş</span>
+                      </button>
+                      <button onClick={() => setSelectedPlayerProfile({ name: pos.user, role: pos.role, team: pos.team, age: 28, phone: "+90 532 123 4567", game: "Pazartesi Gecesi", location: "Isparta / Merkez", mmr: "1800", matches: 25, wins: 18, losses: 7, comments: [
+                        { author: "Ali Yılmaz", text: "Çok agresif oynuyor." },
+                        { author: "Ayşe Demir", text: "Harika paslaşıyor." }
+                      ], rating: 4.3, avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(pos.user) })} className="flex-1 bg-teal-500 hover:bg-teal-400 active:bg-teal-300 text-white text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                        <span>👤</span> <span className="hidden sm:inline">Profili Gör</span>
                       </button>
                       {/* Yönetici Butonu */}
                       <button className="flex-1 bg-red-900/30 hover:bg-red-600 active:bg-red-500 text-red-100 text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm outline outline-1 outline-red-900/50 flex items-center justify-center gap-1.5 uppercase tracking-wider title-attr" title="Odadan At (Yönetici)">
