@@ -4,6 +4,7 @@ import SignUp from "../pages/SignUp";
 import Menu from "../pages/Menu";
 import MatchList from "../pages/MatchList";
 import Match from "../pages/Match";
+import PlayerProfile from "../pages/PlayerProfile";
 import CreateMatch from "../pages/CreateMatch";
 import Location from "../pages/Location";
 import AccountSettings from "../pages/AccountSettings";
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
       {
         path: "/account-settings",
         element: <AccountSettings />,
+      },
+      {
+        path: "/player/:id",
+        element: <PlayerProfile />,
       },
       {
         path: "/create-match",
