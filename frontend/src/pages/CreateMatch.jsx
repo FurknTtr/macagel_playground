@@ -34,8 +34,24 @@ function CreateMatch() {
     setLocationMessage(`Form konumu "Isparta / ${locationQuery.trim()}" olarak ayarlandı.`);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    /*
+      TODO: YENİ MAÇ OLUŞTURMA İŞLEMİ (BACKEND)
+      1. İstek: POST /api/matches
+      2. Gönderilecek Veri (Body): 
+         {
+           name: form.title,
+           date: <Tarih objesi form.date + form.time birleşimi>,
+           location: form.location,
+           capacity: form.capacity,
+           price: form.price // (Eğer modelde price eklerseniz, modelde şu an yok)
+           // owner, inviteCode vs backend tarafında ayarlanacak/oluşturulacak.
+         }
+      3. İşlem: Başarılı olursa Menu'ye yönlendir.
+    */
+    
+    // Geçici Mock İşlem (Daha sonra silinecek)
     const storedMatches = JSON.parse(localStorage.getItem("createdMatches") || "[]");
     const newMatch = {
       id: Date.now(),

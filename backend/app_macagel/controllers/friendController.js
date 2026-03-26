@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const User = mongoose.model("User"); // İlişkiler muhtemelen User modelinde tutulacak
+const User = require("../models/User"); 
 
 const createResponse = function (res, status, content) {
   res.status(status).json(content);

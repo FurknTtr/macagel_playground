@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const User = mongoose.model("User"); // Kendi model ismine göre düzenlersin
+const User = require("../models/User"); 
 // İhtiyaca göre passport.js veya bcrypt eklenebilir
 
 const createResponse = function (res, status, content) {

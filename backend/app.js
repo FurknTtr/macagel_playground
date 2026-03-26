@@ -1,34 +1,30 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+require('dotenv').config(); // 1. Önce gizli ayarlar yüklenmeli
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 
-// 1. İstersen default gelen bu iki satırı silebilirsin, ya da dursun zararı yok.
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-require('dotenv').config();
+
 const connectDB = require('./app_macagel/configs/db'); 
+connectDB(); // 2. Veritabanını ayağa kaldırıyoruz
 
-connectDB(); // Veritabanına bağlanma işlemini başlattık!
+// Router'lar
+const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/users');
+const macaGelRouter = require('./app_macagel/routes/index.js');
 
-// 2. İŞTE BİZİM EKLEDİĞİMİZ SATIR: Kendi router dosyamızı içeri alıyoruz.
-var macaGelRouter = require('./app_macagel/routes/index');
+const app = express();
 
-var app = express();
-
+// Middleware'ler
 app.use(logger('dev'));
-app.use(express.json()); // Bu req.body'yi okumamızı sağlar! Çok önemli.
+app.use(express.json()); 
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Default rotalar (İstersen silebilirsin)
+// Rotalar (Routes)
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
-// 3. İŞTE BİZİM BAĞLANTI NOKTAMIZ:
-// "Eğer url /maca-gel ile başlıyorsa, macaGelRouter haritasına git" diyoruz.
 app.use('/maca-gel', macaGelRouter);
 
-// En alttaki dışa aktarma kısmı DOKUNULMADAN kalıyor.
 module.exports = app;

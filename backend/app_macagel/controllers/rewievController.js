@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const User = mongoose.model("User"); // Veya Rating modeli nasıl tasarlandıysa
+const Rating = require("../models/Rating"); 
+const User = require("../models/User");
 
 const createResponse = function (res, status, content) {
   res.status(status).json(content);

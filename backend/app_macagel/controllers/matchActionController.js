@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Match = mongoose.model("Match"); 
+const Match = require("../models/Match"); 
 
 const createResponse = function (res, status, content) {
   res.status(status).json(content);

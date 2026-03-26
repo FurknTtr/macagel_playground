@@ -4,19 +4,46 @@ import { Link, useParams } from "react-router-dom";
 function PlayerProfile() {
   const { id } = useParams();
   
-  // Örnek Oyuncu Verisi
+  // Backend'den çekilecek oyuncu verisi
   const [player, setPlayer] = useState({
-    name: id || "Kullanıcı",
+    name: id || "Yükleniyor...",
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(id || "Kullanıcı")}&background=random&color=fff&size=128`,
-    matchesPlayed: 42,
-    rating: 4.5,
-    roles: ["Forvet", "Ortasaha"],
-    comments: [
-      { id: 1, author: "Ali Yılmaz", rating: 5, text: "Harika takım oyunu, pasları çok iyi.", date: "12 Mart 2026", isOwnComment: false },
-      { id: 2, author: "Ayşe Demir", rating: 4, text: "Agresif oynuyor ama bitiriciliği mükemmel.", date: "20 Mart 2026", isOwnComment: false },
-      { id: 3, author: "Furkan Tatar", rating: 5, text: "Benim kadromdaydı, efsane oynadı.", date: "25 Mart 2026", isOwnComment: true } // Bu yorumu giriş yapmış kişi atmış gibi simüle edelim.
-    ]
+    matchesPlayed: 0,
+    rating: 0,
+    roles: [],
+    comments: []
   });
+
+  // Komponent yüklendiğinde metodları çağır
+  React.useEffect(() => {
+    fetchPlayerProfile();
+    fetchPlayerRatings();
+  }, [id]);
+
+  const fetchPlayerProfile = async () => {
+    /*
+      TODO: OYUNCU PROFİLİNİ ÇEK (Kullanıcı temel bilgileri ve istatistikler)
+      1. İstek: GET /api/users/${id} 
+      2. İşlem: Gelen username, stats (averageRating, totalMatches) setPlayer içine atanacak.
+         setPlayer(prev => ({
+           ...prev,
+           name: data.username,
+           matchesPlayed: data.stats.totalMatches,
+           rating: data.stats.averageRating,
+           roles: ...
+         }));
+    */
+  };
+
+  const fetchPlayerRatings = async () => {
+    /*
+      TODO: OYUNCUNUN YORUMLARINI ÇEK
+      1. İstek: GET /api/ratings/user/${id}
+      2. İşlem: Gelen diziyi map'le ve isOwnComment kontrolü yap 
+         (giriş yapan user._id === yorumun reviewer._id ise true yap)
+         setPlayer(prev => ({ ...prev, comments: formattedData }));
+    */
+  };
 
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [newRating, setNewRating] = useState(5);
@@ -24,12 +51,17 @@ function PlayerProfile() {
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({ isOpen: false, commentId: null });
   const [editingCommentId, setEditingCommentId] = useState(null);
 
-  const handleRateSubmit = (e) => {
+  const handleRateSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
     if (editingCommentId) {
-      // Yorum güncelleme
+      /*
+        TODO: YORUM GÜNCELLE
+        1. İstek: PUT /api/ratings/${editingCommentId}
+        2. Body: { rating: newRating, comment: newComment }
+        3. Başarılıysa state'i güncelle:
+      */
       setPlayer(prev => ({
         ...prev,
         comments: prev.comments.map(c => 
@@ -39,10 +71,15 @@ function PlayerProfile() {
         )
       }));
     } else {
-      // Yeni yorum ekleme
+      /*
+        TODO: YENİ YORUM YAP
+        1. İstek: POST /api/ratings
+        2. Body: { targetUser: id, rating: newRating, comment: newComment }
+        3. Başarılıysa dönen veriyi comments state'ine ekle:
+      */
       const newCommentObj = {
         id: Date.now(),
-        author: "Furkan Tatar", // Şu an giriş yapan kullanıcı varsayımı
+        author: "Ben", // Backendden kendi ismimizi almalıyız
         rating: newRating,
         text: newComment,
         date: "Bugün",
@@ -79,7 +116,12 @@ function PlayerProfile() {
     setDeleteConfirmModal({ isOpen: true, commentId });
   };
 
-  const confirmDeleteComment = () => {
+  const confirmDeleteComment = async () => {
+    /*
+      TODO: YORUMU SİL
+      1. İstek: DELETE /api/ratings/${deleteConfirmModal.commentId}
+      2. Başarılıysa state'den kaldır:
+    */
     setPlayer(prev => ({
       ...prev,
       comments: prev.comments.filter(c => c.id !== deleteConfirmModal.commentId)

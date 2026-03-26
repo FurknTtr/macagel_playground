@@ -7,19 +7,27 @@ function Discover() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState("Tüm Şehirler");
 
+  // TODO: Dinamik Şehir Listesi Backend'den çekilebilir
   const cities = ["Tüm Şehirler", "Isparta", "İstanbul", "Ankara", "İzmir", "Antalya", "Bursa"];
 
-  // MOCK DATA: Sistemdeki tüm maçlar (Pazar Yeri)
-  const [allMatches] = useState([
-    { id: 101, title: "Acil Forvet Aranıyor!", manager: "Furkan Tatar", location: "Isparta / Batıkent Halısaha", date: "24 Mart", time: "20:00", capacity: "13/14", price: "150 TL" },
-    { id: 102, title: "Şirketler Arası Dostluk Maçı", manager: "Deniz Yılmaz", location: "Isparta / SDÜ Halı Saha", date: "25 Mart", time: "18:00", capacity: "8/14", price: "Free" },
-    { id: 103, title: "Gece Kuşları Kapışıyor", manager: "Sibel Aksoy", location: "Isparta / Fatih Halısaha ", date: "26 Mart", time: "23:00", capacity: "10/14", price: "200 TL" },
-    { id: 104, title: "Haftalık Rutin Maç", manager: "Murat Çelik", location: "Isparta / Algida Halı Saha", date: "27 Mart", time: "21:00", capacity: "12/14", price: "180 TL" },
-    { id: 105, title: "Isparta Antrenman Maçı", manager: "Esra Kaya", location: "Isparta / Süleyman Demirel Stadyumu Halı Saha", date: "28 Mart", time: "19:00", capacity: "5/12", price: "120 TL" },
-    { id: 106, title: "Kadınlar Dostluk Turnuvası", manager: "Gizem Öz", location: "Isparta / Kılıçarslan Halı Saha", date: "29 Mart", time: "17:30", capacity: "9/14", price: "Free" },
-    { id: 107, title: "Hafta Sonu 6v6 Eğlence", manager: "Ali Yıldız", location: "Isparta / Karacaören Halı Saha", date: "30 Mart", time: "16:00", capacity: "6/12", price: "100 TL" },
-    { id: 108, title: "Akşam Çim Ligi", manager: "Leyla Demir", location: "İzmir / Sorkun Halı Saha", date: "31 Mart", time: "21:00", capacity: "11/14", price: "140 TL" },
-  ]);
+  // MOCK DATA YERİNE BACKEND'DEN GELECEK VERİLER
+  const [allMatches, setAllMatches] = useState([]);
+
+  // Komponent yüklendiğinde pazar yerindeki maçları çekecek metod
+  React.useEffect(() => {
+    fetchDiscoverMatches();
+  }, []);
+
+  const fetchDiscoverMatches = async () => {
+    /* 
+      TODO: BACKEND BAĞLANTISI (Pazar Yeri Maçları Çekme)
+      1. İstek: GET /api/matches/discover
+      2. İşlem: Gelen diziyi state'e ata
+         const response = await fetch('/api/matches/discover');
+         const data = await response.json();
+         setAllMatches(data);
+    */
+  };
 
   const filteredMatches = allMatches.filter(match => {
     const matchesSearch = match.title.toLowerCase().includes(searchTerm.toLowerCase()) || 

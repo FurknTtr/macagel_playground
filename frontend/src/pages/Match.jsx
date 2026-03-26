@@ -92,51 +92,40 @@ function Match() {
     }
   };
 
-  // Format veya formasyon değiştiğinde pozisyonları sıfırla veya yeniden yükle
+  // Format veya formasyon değiştiğinde (veya sayfa ilk açıldığında) backendden oyuncu verisini çekip pozisyonlara yerleştir
   useEffect(() => {
+    fetchMatchDetailsAndPlayers();
+  }, [matchFormat, teamAFormation6v6, teamBFormation6v6, teamAFormation7v7, teamBFormation7v7, teamAFormation8v8, teamBFormation8v8]);
+
+  const fetchMatchDetailsAndPlayers = async () => {
+    /*
+      TODO: BACKEND BAĞLANTISI (MAÇ DETAYLARI VE OYUNCULAR)
+      1. İstek: GET /api/matches/:matchId 
+      2. İşlem: Backend'den gelen `players` dizisinde { user: {_id, username, stats}, position: 'Forvet', ... } bulunacak.
+      3. Aşağıdaki mock veriyi onlara göre ezerek setPositions'ı çalıştıracaksınız.
+    */
     if (matchFormat === "6v6") {
-      // A Takımı ve B Takımı için farklı formasyonlar
       const teamAData = getFormationData6v6(teamAFormation6v6);
       const teamBData = getFormationData6v6(teamBFormation6v6);
+      const mockSix = [...teamAData.slice(0, 6), ...teamBData.slice(6, 12)];
       
-      // A Takımı (id 1-6) ve B Takımı (id 7-12) verilerini birleştir
-      const mockSix = [
-        ...teamAData.slice(0, 6),
-        ...teamBData.slice(6, 12)
-      ];
-      
-      mockSix[0] = { ...mockSix[0], user: "Fatih K.", stats: { matches: 42, rating: '4.9' } };
-      mockSix[5] = { ...mockSix[5], user: "Ahmet Y.", stats: { matches: 15, rating: '3.8' } };
+      // TODO: API'den gelen oyuncular map ile mockSix içine uygun id'ye göre atılacak. (Şimdilik boş kalacak)
       setPositions(mockSix);
     } else if (matchFormat === "7v7") {
-      // A Takımı ve B Takımı için farklı formasyonlar
       const teamAData = getFormationData7v7(teamAFormation7v7);
       const teamBData = getFormationData7v7(teamBFormation7v7);
+      const mockSeven = [...teamAData.slice(0, 7), ...teamBData.slice(7, 14)];
       
-      // A Takımı (id 1-7) ve B Takımı (id 8-14) verilerini birleştir
-      const mockSeven = [
-        ...teamAData.slice(0, 7),
-        ...teamBData.slice(7, 14)
-      ];
-      
-      mockSeven[0] = { ...mockSeven[0], user: "Fatih K.", stats: { matches: 42, rating: '4.9' } };
-      mockSeven[6] = { ...mockSeven[6], user: "Ahmet Y.", stats: { matches: 15, rating: '3.8' } };
       setPositions(mockSeven);
     } else if (matchFormat === "8v8") {
       const teamAData = getFormationData8v8(teamAFormation8v8);
       const teamBData = getFormationData8v8(teamBFormation8v8);
-      const mockEight = [
-        ...teamAData.slice(0, 8),
-        ...teamBData.slice(8, 16)
-      ];
+      const mockEight = [...teamAData.slice(0, 8), ...teamBData.slice(8, 16)];
       
-      mockEight[0] = { ...mockEight[0], user: "Fatih K.", stats: { matches: 42, rating: '4.9' } };
-      mockEight[7] = { ...mockEight[7], user: "Ahmet Y.", stats: { matches: 15, rating: '3.8' } };
       setPositions(mockEight);
     }
-
     setActivePopover(null);
-  }, [matchFormat, teamAFormation6v6, teamBFormation6v6, teamAFormation7v7, teamBFormation7v7, teamAFormation8v8, teamBFormation8v8]);
+  };
 
   const handleJoin = (id) => {
     const targetPos = positions.find(p => p.id === id);

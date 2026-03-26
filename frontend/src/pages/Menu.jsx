@@ -5,12 +5,39 @@ function Menu() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("upcoming");
 
-  // VERİLER (Eksiksiz tam kadro)
-  const [matches, setMatches] = useState([
-    { id: 1, title: "Pazartesi Gecesi Halı Saha", manager: "Furkan Tatar", location: "Isparta / Merkez", date: "23 Mart", time: "21:00", capacity: "12/14", isOwner: true, type: "upcoming" },
-    { id: 2, title: "SDU Batı Sahası Maçı", manager: "Deniz Yılmaz", location: "SDU Sahaları", date: "25 Mart", time: "19:00", capacity: "10/14", isOwner: false, type: "upcoming" },
-    { id: 3, title: "Efsane Cuma Kapışması", manager: "Murat Çelik", location: "Arena Park", date: "10 Mart", time: "22:00", score: "7 - 5", isOwner: false, type: "past" },
-  ]);
+  // VERİLER (Backend'den Gelecek)
+  const [matches, setMatches] = useState([]);
+
+  // Komponent yüklendiğinde verileri çekecek metodlar
+  useEffect(() => {
+    fetchMyMatches();
+    fetchFriends();
+  }, []);
+
+  const fetchMyMatches = async () => {
+    /* 
+      TODO: BACKEND BAĞLANTISI (MAÇLAR)
+      1. İstek: GET /api/matches/my-matches (veya uygun endpoint)
+      2. Gönderilecek: Header'da kullanıcı token'ı (JWT)
+      3. Beklenen Yanıt: Kullanıcının içinde bulunduğu veya sahibi olduğu maçların listesi
+      4. İşlem: Gelen veriler formatlanıp setMatches(data) ile state'e kaydedilecek.
+         Gelen verideki tarihe göre 'type' alanı 'upcoming' veya 'past' olarak ayarlanabilir.
+         örn:
+         const response = await fetch('/api/matches/my-matches', { ...headers });
+         const data = await response.json();
+         setMatches(data);
+    */
+  };
+
+  const fetchFriends = async () => {
+    /* 
+      TODO: BACKEND BAĞLANTISI (ARKADAŞLAR)
+      1. İstek: GET /api/users/me/friends
+      2. Gönderilecek: Header'da kullanıcı token'ı (JWT)
+      3. Beklenen Yanıt: [{ name: "Ahmet", status: "online", _id: "..." }, ...]
+      4. İşlem: setFriends(data)
+    */
+  };
 
   const [editingMatch, setEditingMatch] = useState(null);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({ isOpen: false, matchId: null });
@@ -47,22 +74,19 @@ function Menu() {
     setDeleteConfirmModal({ isOpen: true, matchId });
   };
 
-  const confirmRemoveMatch = () => {
+  const confirmRemoveMatch = async () => {
+    /*
+      TODO: MAÇ SİLME
+      1. İstek: DELETE /api/matches/${deleteConfirmModal.matchId}
+      2. İşlem: Başarılı olursa frontend state'ini güncelle:
+         setMatches((prev) => prev.filter((m) => m.id !== deleteConfirmModal.matchId));
+    */
+    // Şimdilik sadece state'ten siliyoruz (optimistic update gibi)
     setMatches((prev) => prev.filter((m) => m.id !== deleteConfirmModal.matchId));
     setDeleteConfirmModal({ isOpen: false, matchId: null });
   };
 
-  //getFriends atılıcak
-  const getFriends = () => {
-  };
-
-  const [friends, setFriends] = useState([
-    //friends den gelen veri bu degişkene konucak
-    { name: "Ahmet Yılmaz", status: "online" },
-    { name: "Rukiye", status: "online" },
-    { name: "Mehmet Demir", status: "offline" },
-    { name: "Caner Hoca", status: "online" },
-  ]);
+  const [friends, setFriends] = useState([]);
 
   const handleRemoveFriendClick = (name) => {
     setFriendDeleteModal({ isOpen: true, friendName: name });
