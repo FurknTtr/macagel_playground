@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import SixPosition, { 
   initialSixPositions,
   formation_1_2_2_1,
@@ -26,6 +26,7 @@ import EightPosition, {
 } from "../components/PositionBoxes/eightPosition";
 
 function Match() {
+  const { matchId } = useParams(); // URL'den match ID'sini al
   const [matchFormat, setMatchFormat] = useState("7v7"); // 6v6 veya 7v7 veya 8v8
   const [teamAFormation6v6, setTeamAFormation6v6] = useState("1-2-2-1"); // 6v6 A Takımı
   const [teamBFormation6v6, setTeamBFormation6v6] = useState("1-2-2-1"); // 6v6 B Takımı
@@ -36,14 +37,17 @@ function Match() {
   const [positions, setPositions] = useState(initialSevenPositions);
 
   // Şık Modal ve Popover State'leri
-  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: "", posId: null, posUser: "", posRole: "" });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: "", posId: null, posUser: "", posRole: "", posUserId: null });
   const [activePopover, setActivePopover] = useState(null);
+  const [matchOwner, setMatchOwner] = useState(null); // Maç yöneticisi
+  const [matchData, setMatchData] = useState(null); // Backend'den gelen maç verileri
+  const [currentUser, setCurrentUser] = useState(null); // Güncel kullanıcı
   
   // Kopyalama Toast State'i
   const [copied, setCopied] = useState(false);
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText("X7B9K2");
+    navigator.clipboard.writeText(matchData?.inviteCode || "X7B9K2");
     setCopied(true);
     setTimeout(() => {
       setCopied(false);
@@ -98,74 +102,195 @@ function Match() {
   }, [matchFormat, teamAFormation6v6, teamBFormation6v6, teamAFormation7v7, teamBFormation7v7, teamAFormation8v8, teamBFormation8v8]);
 
   const fetchMatchDetailsAndPlayers = async () => {
-    /*
-      TODO: BACKEND BAĞLANTISI (MAÇ DETAYLARI VE OYUNCULAR)
-      1. İstek: GET /api/matches/:matchId 
-      2. İşlem: Backend'den gelen `players` dizisinde { user: {_id, username, stats}, position: 'Forvet', ... } bulunacak.
-      3. Aşağıdaki mock veriyi onlara göre ezerek setPositions'ı çalıştıracaksınız.
-    */
-    if (matchFormat === "6v6") {
-      const teamAData = getFormationData6v6(teamAFormation6v6);
-      const teamBData = getFormationData6v6(teamBFormation6v6);
-      const mockSix = [...teamAData.slice(0, 6), ...teamBData.slice(6, 12)];
+    try {
+      if (!matchId) {
+        console.error("matchId bulunamadı");
+        return;
+      }
+
+      // Güncel user bilgisini al
+      const userStr = localStorage.getItem("user");
+      const currentUserData = userStr ? JSON.parse(userStr) : null;
+      setCurrentUser(currentUserData);
+
+      // Backend'den match detaylarını ve oyuncuları çek
+      const response = await fetch(`http://localhost:3000/maca-gel/getMatch/${matchId}`);
       
-      // TODO: API'den gelen oyuncular map ile mockSix içine uygun id'ye göre atılacak. (Şimdilik boş kalacak)
-      setPositions(mockSix);
-    } else if (matchFormat === "7v7") {
-      const teamAData = getFormationData7v7(teamAFormation7v7);
-      const teamBData = getFormationData7v7(teamBFormation7v7);
-      const mockSeven = [...teamAData.slice(0, 7), ...teamBData.slice(7, 14)];
+      if (!response.ok) {
+        console.error("Match getirilemedi:", response.status);
+        return;
+      }
+
+      const matchDataResponse = await response.json();
+      setMatchData(matchDataResponse);
       
-      setPositions(mockSeven);
-    } else if (matchFormat === "8v8") {
-      const teamAData = getFormationData8v8(teamAFormation8v8);
-      const teamBData = getFormationData8v8(teamBFormation8v8);
-      const mockEight = [...teamAData.slice(0, 8), ...teamBData.slice(8, 16)];
+      // Maç yöneticisini set et (matchDataResponse'den oku, state'den değil!)
+      const ownerId = typeof matchDataResponse.owner === 'object' ? matchDataResponse.owner._id : matchDataResponse.owner;
+      setMatchOwner(ownerId);
       
-      setPositions(mockEight);
+      const players = matchDataResponse.players || [];
+
+      // Format'a göre pozisyon templatesi al
+      let teamAData, teamBData;
+      
+      if (matchFormat === "6v6") {
+        teamAData = getFormationData6v6(teamAFormation6v6);
+        teamBData = getFormationData6v6(teamBFormation6v6);
+        const mockSix = [...teamAData.slice(0, 6), ...teamBData.slice(6, 12)];
+        
+        // Backend'den gelen oyuncuları positionId'ye göre positions array'e yerleştir
+        players.forEach(player => {
+          if (player.positionId > 0 && player.positionId <= 12) {
+            // Güncel user'sa "(Sen)" ekle
+            const username = player.user?.username || "Boş";
+            const displayName = currentUserData && player.user?._id === currentUserData.id ? `${username} (Sen)` : username;
+            
+            mockSix[player.positionId - 1] = {
+              ...mockSix[player.positionId - 1],
+              user: displayName,
+              stats: player.user?.stats || {},
+              userId: player.user?._id
+            };
+          }
+        });
+        
+        setPositions(mockSix);
+      } else if (matchFormat === "7v7") {
+        teamAData = getFormationData7v7(teamAFormation7v7);
+        teamBData = getFormationData7v7(teamBFormation7v7);
+        const mockSeven = [...teamAData.slice(0, 7), ...teamBData.slice(7, 14)];
+        
+        players.forEach(player => {
+          if (player.positionId > 0 && player.positionId <= 14) {
+            // Güncel user'sa "(Sen)" ekle
+            const username = player.user?.username || "Boş";
+            const displayName = currentUserData && player.user?._id === currentUserData.id ? `${username} (Sen)` : username;
+            
+            mockSeven[player.positionId - 1] = {
+              ...mockSeven[player.positionId - 1],
+              user: displayName,
+              stats: player.user?.stats || {},
+              userId: player.user?._id
+            };
+          }
+        });
+        
+        setPositions(mockSeven);
+      } else if (matchFormat === "8v8") {
+        teamAData = getFormationData8v8(teamAFormation8v8);
+        teamBData = getFormationData8v8(teamBFormation8v8);
+        const mockEight = [...teamAData.slice(0, 8), ...teamBData.slice(8, 16)];
+        
+        players.forEach(player => {
+          if (player.positionId > 0 && player.positionId <= 16) {
+            // Güncel user'sa "(Sen)" ekle
+            const username = player.user?.username || "Boş";
+            const displayName = currentUserData && player.user?._id === currentUserData.id ? `${username} (Sen)` : username;
+            
+            mockEight[player.positionId - 1] = {
+              ...mockEight[player.positionId - 1],
+              user: displayName,
+              stats: player.user?.stats || {},
+              userId: player.user?._id
+            };
+          }
+        });
+        
+        setPositions(mockEight);
+      }
+    } catch (error) {
+      console.error("Match detayları getirirken hata oluştu:", error);
     }
+    
     setActivePopover(null);
   };
 
   const handleJoin = (id) => {
     const targetPos = positions.find(p => p.id === id);
-    const userAlreadyInAction = positions.some(p => p.user.includes("Sen") && p.id !== id);
-
-    // Dolu bir oyuncuya (Kendisi veya boş değilse) tıklanırsa popover'ı yönet
-    if (targetPos.user !== "Boş" && !targetPos.user.includes("Sen")) {
-      // Açık popover'a tekrar tıklandıysa kapat, değilse aç
-      setActivePopover(prev => (prev === id ? null : id));
-      return;
-    }
-
-    // Boş veya kendisine ait bir yere tıklandığında popover açıksa kapat
-    if (activePopover) setActivePopover(null);
-
-    // Eğer mevki boşsa
-    if (targetPos.user === "Boş") {
-      if (userAlreadyInAction) {
-        setConfirmModal({ isOpen: true, type: "error", posId: null });
-        return;
-      }
-      setConfirmModal({ isOpen: true, type: "join", posId: id, posRole: targetPos.role });
-    } 
-    // Eğer kullanıcı bu mevkiyi zaten tutuyor/istek attıysa
-    else if (targetPos.user.includes("Sen")) {
-      setConfirmModal({ isOpen: true, type: "leave", posId: id, posRole: targetPos.role });
+    
+    // Aynı pozisyona tıklandıysa popover'ı kapat, yoksa aç
+    if (activePopover === id) {
+      setActivePopover(null);
+    } else {
+      setActivePopover(id);
     }
   };
 
-  const confirmAction = () => {
-    if (confirmModal.type === "join") {
-      setPositions(prev => prev.map(pos => 
-        pos.id === confirmModal.posId ? { ...pos, user: "Sen (İstek)" } : pos
-      ));
-    } else if (confirmModal.type === "leave") {
-      setPositions(prev => prev.map(pos => 
-        pos.id === confirmModal.posId ? { ...pos, user: "Boş" } : pos
-      ));
+  const confirmAction = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (!user.id) return alert("Önce giriş yapmalısınız");
+
+      if (confirmModal.type === "join") {
+        // Kullanıcı zaten başka bir pozisyonda varsa kontrol et
+        const userAlreadyInPosition = positions.find(
+          pos => pos.userId === user.id && pos.id !== confirmModal.posId
+        );
+        
+        if (userAlreadyInPosition) {
+          alert("Birden fazla pozisyona katılamazsın");
+          setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null });
+          return;
+        }
+
+        // Backend'e mevkii'ye katılma isteği yolla (joinPosition)
+        const response = await fetch("http://localhost:3000/maca-gel/joinPosition", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            matchId: matchId,
+            userId: user.id,
+            positionId: confirmModal.posId,
+            position: confirmModal.posRole
+          })
+        });
+
+        if (response.ok) {
+          setPositions(prev => prev.map(pos => 
+            pos.id === confirmModal.posId ? { ...pos, user: user.username } : pos
+          ));
+        } else {
+          alert("Mevkiye katılırken hata oluştu!");
+        }
+
+      } else if (confirmModal.type === "leave") {
+        // Backend'e maçtan ayrılma isteği yolla (leaveOrKickPlayer)
+        const response = await fetch(`http://localhost:3000/maca-gel/leave/${user.id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ matchId: matchId })
+        });
+
+        if (response.ok) {
+          setPositions(prev => prev.map(pos => 
+            pos.id === confirmModal.posId ? { ...pos, user: "Boş" } : pos
+          ));
+        } else {
+          alert("Maçtan ayrılırken hata oluştu!");
+        }
+
+      } else if (confirmModal.type === "kick") {
+        // Backend'e oyuncu atma isteği yolla (sadece yönetici yapabilir)
+        const response = await fetch(`http://localhost:3000/maca-gel/leave/${confirmModal.posUserId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ matchId: matchId, operationType: "kick", requesterId: user.id })
+        });
+
+        if (response.ok) {
+          setPositions(prev => prev.map(pos => 
+            pos.id === confirmModal.posId ? { ...pos, user: "Boş", userId: null } : pos
+          ));
+        } else {
+          alert("Oyuncu atılırken hata oluştu!");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert("İşlem gerçekleştirilemedi");
+    } finally {
+      setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null });
     }
-    setConfirmModal({ isOpen: false, type: "", posId: null });
   };
 
   const totalPlayers = matchFormat === "6v6" ? 12 : matchFormat === "7v7" ? 14 : 16;
@@ -212,11 +337,20 @@ function Match() {
           {activePopover && (() => {
             const pos = positions.find(p => p.id === activePopover);
             if (!pos) return null;
+            
+            const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+            const isOwnPosition = pos.user.includes("(Sen)");
+            const isOwner = currentUser.id === matchOwner;
+            const isEmptyPosition = pos.user === "Boş";
+            
             const isRightSide = parseInt(pos.left) > 50;
+            const posLeft = parseInt(pos.left);
+            const isCenter = posLeft === 50;
             const topPercent = parseInt(pos.top);
 
             let yAlignClass = "-translate-y-1/2"; 
             let arrowAlignClass = "top-1/2 -translate-y-1/2";
+            let xPositionClass = isCenter ? "-translate-x-1/2 left-1/2" : (isRightSide ? "right-full mr-5 sm:mr-7" : "left-full ml-5 sm:ml-7");
             
             if (topPercent <= 20) {
                 yAlignClass = "top-0 -mt-4"; 
@@ -233,34 +367,63 @@ function Match() {
                 style={{ top: pos.top, left: pos.left }}
               >
                 <div className={`pointer-events-auto absolute flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200
-                  ${isRightSide ? "right-full mr-5 sm:mr-7" : "left-full ml-5 sm:ml-7"}
+                  ${xPositionClass}
                   ${yAlignClass}`}
                 >
                   {/* Baloncuk Oku (Mutlak Konumlandırma) */}
                   <div className={`absolute w-0 h-0 border-y-[8px] border-y-transparent z-[51] drop-shadow-2xl
-                    ${isRightSide ? "border-l-[8px] border-l-gray-800 -right-[8px]" : "border-r-[8px] border-r-gray-800 -left-[8px]"} 
+                    ${isCenter ? "hidden" : isRightSide ? "border-l-[8px] border-l-gray-800 -right-[8px]" : "border-r-[8px] border-r-gray-800 -left-[8px]"} 
                     ${arrowAlignClass}`}>
                   </div>
 
                   {/* Yatay Tasarımlı Baloncuk İçeriği */}
                   <div className="bg-gray-800 border border-gray-600 rounded-2xl p-4 w-[280px] sm:w-[320px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex flex-col gap-3 relative z-50">
                     
-                    {/* Üst Bilgi ve Profil (Yan Yana) */}
-                    <div className="flex items-center gap-4">
-                      <img src={`https://ui-avatars.com/api/?name=${pos.user}&background=059669&color=fff&size=56`} alt="profil" className="w-14 h-14 rounded-full border-2 border-gray-500 shadow-sm flex-shrink-0" />
-                      
-                      <div className="flex flex-col flex-1">
-                        <div className="flex flex-col mb-1:5">
-                            <span className="text-white font-black text-sm leading-tight uppercase tracking-tight line-clamp-1">{pos.user}</span>
-                            <span className="text-green-400 text-[10px] font-bold uppercase tracking-widest leading-none">{pos.role}</span>
-                        </div>
-                        
-                        {/* İstatistikler */}
-                        <div className="flex gap-4 bg-gray-900/60 rounded-lg p-2 border border-gray-700/50 mt-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">Maç</span>
-                            <span className="text-white font-black text-xs">{pos.stats?.matches || 15}</span>
+                    {isEmptyPosition ? (
+                      /* Boş Pozisyon İçin Popover */
+                      <>
+                        <div className="flex items-center justify-center flex-col gap-3">
+                          <div className="w-20 h-20 bg-gray-700/50 rounded-full border-4 border-dashed border-gray-600 flex items-center justify-center">
+                            <span className="text-4xl">+</span>
                           </div>
+                          <div className="text-center">
+                            <span className="text-white font-black text-sm uppercase tracking-tight">BOŞ POZİSYON</span>
+                            <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest block mt-1">{pos.role}</span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            const userAlreadyHasPosition = positions.some(p => p.user.includes("Sen"));
+                            if (userAlreadyHasPosition) {
+                              alert("Zaten bir pozisyondadasınız. Önce o pozisyondan çıkın.");
+                              return;
+                            }
+                            setConfirmModal({ isOpen: true, type: "join", posId: pos.id, posRole: pos.role });
+                            setActivePopover(null);
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-500 active:bg-green-400 text-white text-[10px] font-black py-3 rounded-xl transition-all shadow-lg shadow-green-900/40 flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                          <span>➕</span> <span>Pozisyona Katıl</span>
+                        </button>
+                      </>
+                    ) : (
+                      /* Dolu Pozisyon İçin Popover */
+                      <>
+                        {/* Üst Bilgi ve Profil (Yan Yana) */}
+                        <div className="flex items-center gap-4">
+                          <img src={`https://ui-avatars.com/api/?name=${pos.user.replace(" (Sen)", "")}&background=059669&color=fff&size=56`} alt="profil" className="w-14 h-14 rounded-full border-2 border-gray-500 shadow-sm flex-shrink-0" />
+                          
+                          <div className="flex flex-col flex-1">
+                            <div className="flex flex-col mb-1:5">
+                                <span className="text-white font-black text-sm leading-tight uppercase tracking-tight line-clamp-1">{pos.user.replace(" (Sen)", "")}</span>
+                                <span className="text-green-400 text-[10px] font-bold uppercase tracking-widest leading-none">{pos.role}</span>
+                            </div>
+                            
+                            {/* İstatistikler */}
+                            <div className="flex gap-4 bg-gray-900/60 rounded-lg p-2 border border-gray-700/50 mt-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">Maç</span>
+                                <span className="text-white font-black text-xs">{pos.stats?.matches || 15}</span>
+                              </div>
                           <div className="w-px h-3.5 bg-gray-600/50 self-center"></div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">Puan</span>
@@ -270,22 +433,87 @@ function Match() {
                       </div>
                     </div>
 
-                    {/* Aksiyon Butonları (Yatay Tek Satır) */}
-                    <div className="flex gap-2 w-full">
-                      <button className="flex-1 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                    {/* Aksiyon Butonları - Koşullu Gösterim */}
+                    <div className="flex gap-2 w-full flex-wrap">
+                      {/* Arkadaş Ekle - Her zaman göster */}
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const user = JSON.parse(localStorage.getItem("user") || "{}");
+                            if (!user.id) {
+                              alert("Önce giriş yapmalısınız");
+                              return;
+                            }
+
+                            const response = await fetch("http://localhost:3000/maca-gel/addFriend", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                userId: user.id,
+                                friendId: pos.userId
+                              })
+                            });
+
+                            const data = await response.json();
+                            if (response.ok) {
+                              alert("Arkadaş başarıyla eklendi!");
+                              setActivePopover(null);
+                            } else {
+                              alert(data.message || "Arkadaş eklenemedi");
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            alert("Sunucuya bağlanılamıyor");
+                          }
+                        }}
+                        className="flex-1 min-w-[50px] bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider">
                         <span>🫂</span> <span className="hidden sm:inline">Ekle</span>
                       </button>
-                      <button className="flex-1 bg-blue-900/40 hover:bg-blue-600 active:bg-blue-500 text-blue-100 text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm outline outline-1 outline-blue-800/50 flex items-center justify-center gap-1.5 uppercase tracking-wider">
-                        <span>🔄</span> <span className="hidden sm:inline">Değiş</span>
-                      </button>
-                      <Link to={`/player/${encodeURIComponent(pos.user)}`} className="flex-1 bg-teal-500 hover:bg-teal-400 active:bg-teal-300 text-white text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider">
-                        <span>👤</span> <span className="hidden sm:inline">Profili Gör</span>
+
+                      {/* Profili Gör - Her zaman göster */}
+                      <Link to={`/player/${encodeURIComponent(pos.user.replace(" (Sen)", ""))}`} className="flex-1 min-w-[50px] bg-teal-500 hover:bg-teal-400 active:bg-teal-300 text-white text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                        <span>👤</span> <span className="hidden sm:inline">Profili</span>
                       </Link>
-                      {/* Yönetici Butonu */}
-                      <button className="flex-1 bg-red-900/30 hover:bg-red-600 active:bg-red-500 text-red-100 text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm outline outline-1 outline-red-900/50 flex items-center justify-center gap-1.5 uppercase tracking-wider title-attr" title="Odadan At (Yönetici)">
-                        <span>⛔</span> <span className="hidden sm:inline">Kick</span>
-                      </button>
+
+                      {/* LEAVE Butonu - Kendi pozisyonu ise (herkes için) */}
+                      {isOwnPosition && (
+                        <button 
+                          onClick={() => {
+                            setConfirmModal({ 
+                              isOpen: true, 
+                              type: "leave", 
+                              posId: pos.id, 
+                              posRole: pos.role,
+                              posUserId: null 
+                            });
+                            setActivePopover(null);
+                          }}
+                          className="flex-1 min-w-[50px] bg-red-600/40 hover:bg-red-600 active:bg-red-500 text-red-100 text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm outline outline-1 outline-red-900/50 flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                          <span>👋</span> <span className="hidden sm:inline">Ayrıl</span>
+                        </button>
+                      )}
+
+                      {/* KICK Butonu - Başkasının pozisyonu ve owner ise */}
+                      {!isOwnPosition && isOwner && (
+                        <button 
+                          onClick={() => {
+                            setConfirmModal({ 
+                              isOpen: true, 
+                              type: "kick", 
+                              posId: pos.id, 
+                              posRole: pos.role,
+                              posUser: pos.user,
+                              posUserId: pos.userId
+                            });
+                            setActivePopover(null);
+                          }}
+                          className="flex-1 min-w-[50px] bg-orange-600/40 hover:bg-orange-600 active:bg-orange-500 text-orange-100 text-[10px] font-black py-2.5 rounded-xl transition-all shadow-sm outline outline-1 outline-orange-900/50 flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                          <span>⛔</span> <span className="hidden sm:inline">Kick</span>
+                        </button>
+                      )}
                     </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -296,8 +524,8 @@ function Match() {
         {/* SAĞ: MAÇ DETAYLARI & AKSİYON */}
         <aside className="w-full lg:w-96 flex flex-col gap-6 sticky top-10">
           <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 shadow-xl relative">
-            <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-2 pr-28">Pazartesi Gecesi</h2>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">Isparta / Merkez - 21:00</p>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-2 pr-28">{matchData?.name || "Maç Adı"}</h2>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">{matchData?.location || "Konum"} - {matchData?.date ? new Date(matchData.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : "Saat"}</p>
 
             {/* Maç Kodu */}
             <div 
@@ -306,28 +534,31 @@ function Match() {
               onClick={handleCopyCode}
             >
               <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-80">KOD:</span>
-              <span className="text-sm font-black tracking-widest">X7B9K2</span>
+              <span className="text-sm font-black tracking-widest">{matchData?.inviteCode || "X7B9K2"}</span>
             </div>
             
-            {/* ODA YÖNETİCİSİ: FORMAT SEÇİMİ */}
+            {/* ODA YÖNETİCİSİNE ÖZEL: FORMAT SEÇİMİ */}
             <div className="mb-6 bg-gray-900 border border-gray-700 rounded-2xl p-4">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-3 text-center">Dizilim Formatı (Yönetici)</label>
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-3 text-center">Dizilim Formatı {!currentUser || currentUser.id !== matchOwner ? "(Sadece Yönetici)" : ""}</label>
               <div className="flex gap-2 bg-gray-800 p-1.5 rounded-xl">
                 <button 
+                  disabled={!currentUser || currentUser.id !== matchOwner}
                   onClick={() => setMatchFormat("6v6")}
-                  className={`flex-1 py-2 rounded-lg text-xs font-black transition-all ${matchFormat === "6v6" ? "bg-green-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-gray-700"}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-black transition-all ${matchFormat === "6v6" ? "bg-green-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-gray-700"} ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   6 vs 6
                 </button>
                 <button 
+                  disabled={!currentUser || currentUser.id !== matchOwner}
                   onClick={() => setMatchFormat("7v7")}
-                  className={`flex-1 py-2 rounded-lg text-xs font-black transition-all ${matchFormat === "7v7" ? "bg-green-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-gray-700"}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-black transition-all ${matchFormat === "7v7" ? "bg-green-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-gray-700"} ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   7 vs 7
                 </button>
                 <button 
+                  disabled={!currentUser || currentUser.id !== matchOwner}
                   onClick={() => setMatchFormat("8v8")}
-                  className={`flex-1 py-2 rounded-lg text-xs font-black transition-all ${matchFormat === "8v8" ? "bg-green-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-gray-700"}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-black transition-all ${matchFormat === "8v8" ? "bg-green-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-gray-700"} ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   8 vs 8
                 </button>
@@ -342,13 +573,14 @@ function Match() {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(sixFormationDefinitions).map(([key, formation]) => (
                       <button
+                        disabled={!currentUser || currentUser.id !== matchOwner}
                         key={`teamA6v6-${key}`}
                         onClick={() => setTeamAFormation6v6(key)}
                         className={`p-3 rounded-xl text-xs font-black transition-all ${
                           teamAFormation6v6 === key 
                             ? "bg-red-600 text-white shadow-md" 
                             : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
-                        }`}
+                        } ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <div className="text-center font-black">{key}</div>
                         <div className="text-[8px] text-opacity-80">{formation.description}</div>
@@ -362,13 +594,14 @@ function Match() {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(sixFormationDefinitions).map(([key, formation]) => (
                       <button
+                        disabled={!currentUser || currentUser.id !== matchOwner}
                         key={`teamB6v6-${key}`}
                         onClick={() => setTeamBFormation6v6(key)}
                         className={`p-3 rounded-xl text-xs font-black transition-all ${
                           teamBFormation6v6 === key 
                             ? "bg-blue-600 text-white shadow-md" 
                             : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
-                        }`}
+                        } ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <div className="text-center font-black">{key}</div>
                         <div className="text-[8px] text-opacity-80">{formation.description}</div>
@@ -387,13 +620,14 @@ function Match() {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(eightFormationDefinitions).map(([key, formation]) => (
                       <button
+                        disabled={!currentUser || currentUser.id !== matchOwner}
                         key={`teamA8v8-${key}`}
                         onClick={() => setTeamAFormation8v8(key)}
                         className={`p-3 rounded-xl text-xs font-black transition-all ${
                           teamAFormation8v8 === key 
                             ? "bg-red-600 text-white shadow-md" 
                             : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
-                        }`}
+                        } ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <div className="text-center font-black">{key}</div>
                         <div className="text-[8px] text-opacity-80">{formation.description}</div>
@@ -407,13 +641,14 @@ function Match() {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(eightFormationDefinitions).map(([key, formation]) => (
                       <button
+                        disabled={!currentUser || currentUser.id !== matchOwner}
                         key={`teamB8v8-${key}`}
                         onClick={() => setTeamBFormation8v8(key)}
                         className={`p-3 rounded-xl text-xs font-black transition-all ${
                           teamBFormation8v8 === key 
                             ? "bg-blue-600 text-white shadow-md" 
                             : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
-                        }`}
+                        } ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <div className="text-center font-black">{key}</div>
                         <div className="text-[8px] text-opacity-80">{formation.description}</div>
@@ -432,13 +667,14 @@ function Match() {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(sevenFormationDefinitions).map(([key, formation]) => (
                       <button
+                        disabled={!currentUser || currentUser.id !== matchOwner}
                         key={`teamA7v7-${key}`}
                         onClick={() => setTeamAFormation7v7(key)}
                         className={`p-3 rounded-xl text-xs font-black transition-all ${
                           teamAFormation7v7 === key 
                             ? "bg-red-600 text-white shadow-md" 
                             : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
-                        }`}
+                        } ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <div className="text-center font-black">{key}</div>
                         <div className="text-[8px] text-opacity-80">{formation.description}</div>
@@ -452,13 +688,14 @@ function Match() {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(sevenFormationDefinitions).map(([key, formation]) => (
                       <button
+                        disabled={!currentUser || currentUser.id !== matchOwner}
                         key={`teamB7v7-${key}`}
                         onClick={() => setTeamBFormation7v7(key)}
                         className={`p-3 rounded-xl text-xs font-black transition-all ${
                           teamBFormation7v7 === key 
                             ? "bg-blue-600 text-white shadow-md" 
                             : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700"
-                        }`}
+                        } ${!currentUser || currentUser.id !== matchOwner ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <div className="text-center font-black">{key}</div>
                         <div className="text-[8px] text-opacity-80">{formation.description}</div>
@@ -512,13 +749,16 @@ function Match() {
                 <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🚫</div>
               ) : confirmModal.type === "join" ? (
                 <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🎯</div>
-              ) : (
+              ) : confirmModal.type === "leave" ? (
                 <div className="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">👋</div>
+              ) : (
+                <div className="w-16 h-16 bg-orange-500/20 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🚪</div>
               )}
 
               <h3 className="text-xl font-black text-white uppercase tracking-tighter">
                 {confirmModal.type === "error" ? "İşlem Başarısız" : 
-                 confirmModal.type === "join" ? "Kadroya Katıl" : "Kadrodan Çık"}
+                 confirmModal.type === "join" ? "Kadroya Katıl" : 
+                 confirmModal.type === "leave" ? "Kadrodan Çık" : "Oyuncu At"}
               </h3>
               
               <p className="text-xs font-bold text-gray-400 mt-3 leading-relaxed px-2">
@@ -527,6 +767,7 @@ function Match() {
                 <br/>
                 {confirmModal.type === "join" && "Bu mevkiye katılma isteği göndermek istediğine emin misin?"}
                 {confirmModal.type === "leave" && "Bu mevkiyi terk etmek veya isteğini iptal etmek istediğine emin misin?"}
+                {confirmModal.type === "kick" && `${confirmModal.posUser} oyuncusunu attan çıkarmak istediğine emin misin?`}
               </p>
             </div>
 
@@ -534,7 +775,7 @@ function Match() {
             <div className="flex gap-3 justify-center">
               {confirmModal.type === "error" ? (
                 <button 
-                  onClick={() => setConfirmModal({ isOpen: false, type: "", posId: null })}
+                  onClick={() => setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null })}
                   className="px-8 py-3.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all w-full"
                 >
                   ANLADIM
@@ -542,7 +783,7 @@ function Match() {
               ) : (
                 <>
                   <button 
-                    onClick={() => setConfirmModal({ isOpen: false, type: "", posId: null })}
+                    onClick={() => setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null })}
                     className="flex-1 py-3.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                   >
                     İPTAL
@@ -550,7 +791,7 @@ function Match() {
                   <button 
                     onClick={confirmAction}
                     className={`flex-1 py-3.5 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg 
-                      ${confirmModal.type === "join" ? "bg-green-600 hover:bg-green-500 shadow-green-900/40" : "bg-red-600 hover:bg-red-500 shadow-red-900/40"}`}
+                      ${confirmModal.type === "join" ? "bg-green-600 hover:bg-green-500 shadow-green-900/40" : confirmModal.type === "leave" ? "bg-red-600 hover:bg-red-500 shadow-red-900/40" : "bg-orange-600 hover:bg-orange-500 shadow-orange-900/40"}`}
                   >
                     ONAYLA
                   </button>

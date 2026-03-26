@@ -49,8 +49,8 @@ export const router = createBrowserRouter([
         element: <CreateMatch />,
       },
       {
-        // :id parametresi ile her maçın kendi sayfasına gitmesini sağlıyoruz
-        path: "/match/:id",
+        // :matchId parametresi ile her maçın kendi sayfasına gitmesini sağlıyoruz
+        path: "/match/:matchId",
         element: <Match />,
       },
       {

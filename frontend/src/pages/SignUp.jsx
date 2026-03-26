@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function SignUp() {
+  const navigate = useNavigate();
   // Kullanıcıdan alacağımız 4 temel bilgi için state'ler
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ function SignUp() {
   
   // Hata yönetimi
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -21,11 +23,29 @@ function SignUp() {
       return;
     }
 
-    // Şimdilik sadece konsola yazdırıyoruz, yakında Node.js'e yollayacağız
-    const newUser = { username, email, phone, password };
-    console.log("Backend'e giden KAYIT verisi:", newUser);
-    
-    alert("Kayıt verileri alındı! (Konsola bakabilirsin)");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:3000/maca-gel/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, phone, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        navigate("/menu");
+      } else {
+        setError(data.message || "Kayıt başarısız.");
+      }
+    } catch (err) {
+      setError("Bağlantı hatası: Sunucuya ulaşılamadı.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -109,9 +129,10 @@ function SignUp() {
 
           <button
             type="submit"
-            className="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-300 shadow-md hover:shadow-lg"
+            disabled={isLoading}
+            className={`w-full ${isLoading ? 'bg-green-400' : 'bg-green-600 hover:bg-green-700 hover:shadow-lg'} text-white font-bold py-3 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-300 shadow-md`}
           >
-            Kayıt Ol
+            {isLoading ? "Kayıt Olunuyor..." : "Kayıt Ol"}
           </button>
         </form>
 

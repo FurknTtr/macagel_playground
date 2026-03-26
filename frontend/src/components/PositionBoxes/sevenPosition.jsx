@@ -61,8 +61,8 @@ export const formation_1_2_3_1 = [
 // 1-2-2-2 Formasyonu (Standart)
 export const formation_1_2_2_2 = [
   { id: 1, team: "A", role: "Kaleci", user: "Boş", top: "8%", left: "50%" },
-  { id: 2, team: "A", role: "Defans", user: "Boş", top: "18%", left: "35%" },
-  { id: 3, team: "A", role: "Defans", user: "Boş", top: "18%", left: "65%" },
+  { id: 2, team: "A", role: "Defans", user: "Boş", top: "18%", left: "65%" },
+  { id: 3, team: "A", role: "Defans", user: "Boş", top: "18%", left: "35%" },
   { id: 4, team: "A", role: "Orta", user: "Boş", top: "27%", left: "25%" },
   { id: 5, team: "A", role: "Orta", user: "Boş", top: "27%", left: "75%" },
   { id: 6, team: "A", role: "Açık", user: "Boş", top: "35%", left: "35%" },

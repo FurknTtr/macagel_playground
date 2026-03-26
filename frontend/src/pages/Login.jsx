@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -15,9 +17,29 @@ function Login() {
       return;
     }
 
-    // Şimdilik sadece konsola yazdırıyoruz, yakında backend'e bağlayacağız
-    console.log("Backend'e giden veri:", { email, password });
-    alert("Giriş denemesi başarılı! (Veriler konsola yazdırıldı)");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:3000/maca-gel/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        navigate("/menu");
+      } else {
+        setError(data.message || "Giriş başarısız.");
+      }
+    } catch (err) {
+      setError("Bağlantı hatası: Sunucuya ulaşılamadı.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -77,9 +99,10 @@ function Login() {
 
           <button
             type="submit"
-            className="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-300 shadow-md hover:shadow-lg"
+            disabled={isLoading}
+            className={`w-full ${isLoading ? 'bg-green-400' : 'bg-green-600 hover:bg-green-700 hover:shadow-lg'} text-white font-bold py-3 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-300 shadow-md`}
           >
-            Giriş Yap
+            {isLoading ? "Giriş Yapılıyor..." : "Giriş Yap"}
           </button>
         </form>
 

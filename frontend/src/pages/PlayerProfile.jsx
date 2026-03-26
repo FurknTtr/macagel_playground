@@ -6,6 +6,7 @@ function PlayerProfile() {
   
   // Backend'den çekilecek oyuncu verisi
   const [player, setPlayer] = useState({
+    userId: null,
     name: id || "Yükleniyor...",
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(id || "Kullanıcı")}&background=random&color=fff&size=128`,
     matchesPlayed: 0,
@@ -21,28 +22,46 @@ function PlayerProfile() {
   }, [id]);
 
   const fetchPlayerProfile = async () => {
-    /*
-      TODO: OYUNCU PROFİLİNİ ÇEK (Kullanıcı temel bilgileri ve istatistikler)
-      1. İstek: GET /api/users/${id} 
-      2. İşlem: Gelen username, stats (averageRating, totalMatches) setPlayer içine atanacak.
-         setPlayer(prev => ({
-           ...prev,
-           name: data.username,
-           matchesPlayed: data.stats.totalMatches,
-           rating: data.stats.averageRating,
-           roles: ...
-         }));
-    */
+    try {
+      const response = await fetch(`http://localhost:3000/maca-gel/playerPreview/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("🔍 Backend'den gelen data.player:", data.player);
+        console.log("🔍 data.player._id değeri:", data.player._id);
+        
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+        const formattedComments = data.reviews.map(r => ({
+          id: r._id,
+          reviewerName: r.reviewer?.username || "Bilinmeyen Kullanıcı",
+          comment: r.comment,
+          rating: r.rating,
+          isOwnComment: r.reviewer?._id === currentUser.id
+        }));
+
+        // Comments'ten rating ortalamasını hesapla
+        const calculatedRating = formattedComments.length > 0 
+          ? (formattedComments.reduce((sum, c) => sum + c.rating, 0) / formattedComments.length).toFixed(1)
+          : 0;
+
+        setPlayer(prev => ({
+          ...prev,
+          userId: data.player._id,
+          name: data.player.username,
+          matchesPlayed: data.player.stats?.totalMatches || 0,
+          rating: parseFloat(calculatedRating),
+          comments: formattedComments
+        }));
+        
+        console.log("✅ Player state set edildi, userId:", data.player._id, "rating:", calculatedRating);
+      }
+    } catch (err) {
+      console.error("Profil alınamadı", err);
+    }
   };
 
   const fetchPlayerRatings = async () => {
-    /*
-      TODO: OYUNCUNUN YORUMLARINI ÇEK
-      1. İstek: GET /api/ratings/user/${id}
-      2. İşlem: Gelen diziyi map'le ve isOwnComment kontrolü yap 
-         (giriş yapan user._id === yorumun reviewer._id ise true yap)
-         setPlayer(prev => ({ ...prev, comments: formattedData }));
-    */
+    // getPlayerPreview içinde yorumlar da dönüyor artık, tek hamlede hallettik. 
   };
 
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -50,46 +69,75 @@ function PlayerProfile() {
   const [newComment, setNewComment] = useState("");
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({ isOpen: false, commentId: null });
   const [editingCommentId, setEditingCommentId] = useState(null);
+  const [displayedCommentCount, setDisplayedCommentCount] = useState(8);
 
   const handleRateSubmit = async (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim()) {
+      alert("Yorum yazmalısın!");
+      return;
+    }
 
-    if (editingCommentId) {
-      /*
-        TODO: YORUM GÜNCELLE
-        1. İstek: PUT /api/ratings/${editingCommentId}
-        2. Body: { rating: newRating, comment: newComment }
-        3. Başarılıysa state'i güncelle:
-      */
-      setPlayer(prev => ({
-        ...prev,
-        comments: prev.comments.map(c => 
-          c.id === editingCommentId 
-            ? { ...c, rating: newRating, text: newComment, date: "Bugün (Düzenlendi)" } 
-            : c
-        )
-      }));
-    } else {
-      /*
-        TODO: YENİ YORUM YAP
-        1. İstek: POST /api/ratings
-        2. Body: { targetUser: id, rating: newRating, comment: newComment }
-        3. Başarılıysa dönen veriyi comments state'ine ekle:
-      */
-      const newCommentObj = {
-        id: Date.now(),
-        author: "Ben", // Backendden kendi ismimizi almalıyız
-        rating: newRating,
-        text: newComment,
-        date: "Bugün",
-        isOwnComment: true
-      };
+    try {
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      if (!currentUser.id) {
+        alert("Giriş yapmalısın!");
+        return;
+      }
 
-      setPlayer(prev => ({
-        ...prev,
-        comments: [newCommentObj, ...prev.comments]
-      }));
+      if (editingCommentId) {
+        const response = await fetch(`http://localhost:3000/maca-gel/rating/${editingCommentId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rating: newRating, comment: newComment })
+        });
+        if (response.ok) {
+          setPlayer(prev => {
+            const updatedComments = prev.comments.map(c => 
+              c.id === editingCommentId ? { ...c, rating: newRating, comment: newComment } : c
+            );
+            const newRatingAvg = updatedComments.length > 0 
+              ? (updatedComments.reduce((sum, c) => sum + c.rating, 0) / updatedComments.length).toFixed(1)
+              : 0;
+            return {
+              ...prev,
+              comments: updatedComments,
+              rating: parseFloat(newRatingAvg)
+            };
+          });
+          alert("Değerlendirme başarıyla güncellendi!");
+        } else {
+          const errorData = await response.json();
+          alert(`Hata: ${errorData.message || "Değerlendirme güncellenemedi"}`);
+        }
+      } else {
+        const response = await fetch(`http://localhost:3000/maca-gel/rating/${id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reviewerId: currentUser.id, rating: newRating, comment: newComment })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setPlayer(prev => {
+            const newComments = [{ id: data.rating._id, reviewerName: currentUser.username, rating: newRating, comment: newComment, isOwnComment: true }, ...prev.comments];
+            const newRatingAvg = newComments.length > 0 
+              ? (newComments.reduce((sum, c) => sum + c.rating, 0) / newComments.length).toFixed(1)
+              : 0;
+            return {
+              ...prev,
+              comments: newComments,
+              rating: parseFloat(newRatingAvg)
+            };
+          });
+          alert("Değerlendirme başarıyla eklendi!");
+        } else {
+          const errorData = await response.json();
+          alert(`Hata: ${errorData.message || "Değerlendirme eklenemedi"}`);
+        }
+      }
+    } catch (err) {
+      console.error("Rating hatası:", err);
+      alert("Değerlendirme kaydedilirken hata oluştu!");
     }
     
     setIsRatingModalOpen(false);
@@ -108,7 +156,7 @@ function PlayerProfile() {
   const handleEditCommentClick = (comment) => {
     setEditingCommentId(comment.id);
     setNewRating(comment.rating);
-    setNewComment(comment.text);
+    setNewComment(comment.comment);
     setIsRatingModalOpen(true);
   };
 
@@ -117,15 +165,31 @@ function PlayerProfile() {
   };
 
   const confirmDeleteComment = async () => {
-    /*
-      TODO: YORUMU SİL
-      1. İstek: DELETE /api/ratings/${deleteConfirmModal.commentId}
-      2. Başarılıysa state'den kaldır:
-    */
-    setPlayer(prev => ({
-      ...prev,
-      comments: prev.comments.filter(c => c.id !== deleteConfirmModal.commentId)
-    }));
+    try {
+      const response = await fetch(`http://localhost:3000/maca-gel/rating/${deleteConfirmModal.commentId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        setPlayer(prev => {
+          const updatedComments = prev.comments.filter(c => c.id !== deleteConfirmModal.commentId);
+          const newRatingAvg = updatedComments.length > 0 
+            ? (updatedComments.reduce((sum, c) => sum + c.rating, 0) / updatedComments.length).toFixed(1)
+            : 0;
+          return {
+            ...prev,
+            comments: updatedComments,
+            rating: parseFloat(newRatingAvg)
+          };
+        });
+        alert("Değerlendirme başarıyla silindi!");
+      } else {
+        const errorData = await response.json();
+        alert(`Hata: ${errorData.message || "Değerlendirme silinemedi"}`);
+      }
+    } catch (err) {
+      console.error("Silme hatası:", err);
+      alert("Değerlendirme silinirken hata oluştu!");
+    }
     setDeleteConfirmModal({ isOpen: false, commentId: null });
   };
 
@@ -189,17 +253,19 @@ function PlayerProfile() {
           
           {player.comments.length > 0 ? (
             <div className="space-y-6">
-              {player.comments.map(c => (
+              {player.comments
+                .sort((a, b) => b.isOwnComment - a.isOwnComment)
+                .slice(0, displayedCommentCount)
+                .map(c => (
                 <div key={c.id} className="bg-gray-50 border border-gray-100 rounded-2xl p-6 relative group">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-black text-sm uppercase text-gray-800 tracking-tight block">{c.author}</span>
+                        <span className="font-black text-sm uppercase text-gray-800 tracking-tight block">{c.reviewerName}</span>
                         {c.isOwnComment && (
                           <span className="bg-blue-100 text-blue-700 text-[8px] font-black uppercase px-2 py-0.5 rounded-md">Senin Yorumun</span>
                         )}
                       </div>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{c.date}</span>
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <div className="bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-100 flex items-center gap-1 mb-1">
@@ -230,9 +296,17 @@ function PlayerProfile() {
                       )}
                     </div>
                   </div>
-                  <p className="text-sm font-bold text-gray-600 leading-relaxed">{c.text}</p>
+                  <p className="text-sm font-bold text-gray-600 leading-relaxed">{c.comment}</p>
                 </div>
               ))}
+              {displayedCommentCount < player.comments.length && (
+                <button 
+                  onClick={() => setDisplayedCommentCount(prev => prev + 8)}
+                  className="w-full mt-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black text-sm uppercase tracking-widest py-3 px-4 rounded-xl transition-all"
+                >
+                  Daha Fazla Yükle ({player.comments.length - displayedCommentCount} kaldı)
+                </button>
+              )}
             </div>
           ) : (
             <p className="text-sm font-bold text-gray-400 text-center py-8">Bu oyuncu hakkında henüz yorum yapılmamış.</p>
@@ -303,7 +377,7 @@ function PlayerProfile() {
                   type="submit"
                   className="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-black text-[12px] uppercase tracking-widest py-4 rounded-xl transition-all shadow-xl shadow-blue-600/30"
                 >
-                  {editingCommentId ? "GÜNCELLE" : "GÖNDER GELSİN"}
+                  {editingCommentId ? "GÜNCELLE" : "GÖNDER"}
                 </button>
               </div>
             </form>

@@ -22,17 +22,24 @@ router.delete('/deleteAccount', accountController.deleteAccount);
 // ==========================================
 // MAÇ YÖNETİMİ (MATCH MANAGEMENT) ROTALARI
 // ==========================================
-router.get('/getMatches', matchController.getMatches);
-router.get('/searchMatch', matchController.searchMatch);
-router.put('/inviteCode', matchController.joinMatchWithCode);
-router.post('/createMatch', matchController.createMatch);
-router.put('/updateMatch', matchController.updateMatch);
-router.delete('/deleteMatch', matchController.deleteMatch);
 
-// DİKKAT: YAML'daki süslü parantezli {matchId} path parametresi, Express'te iki nokta (:) ile yazılır!
-router.get('/getMatchPlayers/:matchId', matchController.getMatchPlayers); 
-router.get('/upcomingMatch/:userId', matchController.getUpcomingMatches);
-router.get('/matchHistory/:userId', matchController.getMatchHistory);
+// Maç Listeleme ve Arama
+router.get('/getAllMatches', matchController.getAllMatches);      // Tüm maçları sayfalı getir
+router.get('/searchMatch', matchController.searchMatch);          // Maçları isim/lokasyona göre ara
+router.get('/filterMatchesByCity', matchController.filterMatchesByCity);  // Maçları sadece şehre göre filtrele
+
+// Maç Detayları
+router.get('/getMatch/:matchId', matchController.getMatch);       // Maç detayları + oyuncuları (positionId ile)
+router.get('/upcomingMatch/:userId', matchController.getUpcomingMatches);  // Kullanıcının yaklaşan maçları
+router.get('/matchHistory/:userId', matchController.getMatchHistory);      // Kullanıcının geçmiş maçları
+
+// Maç Yönetimi (Oluştur, Güncelle, Sil)
+router.post('/createMatch', matchController.createMatch);         // Yeni maç oluştur
+router.put('/updateMatch', matchController.updateMatch);          // Maç bilgilerini güncelle
+router.delete('/deleteMatch', matchController.deleteMatch);       // Maç iptal et (soft-delete)
+
+// Maça Katılma
+router.put('/inviteCode', matchController.joinMatchWithCode);     // Kod ile maça katıl
 
 // ==========================================
 // MAÇ AKSİYONLARI (MATCH ACTIONS) ROTALARI
@@ -43,6 +50,7 @@ router.post('/joinPosition', matchActionController.joinPosition);
 // ==========================================
 // ÖNİZLEME VE DEĞERLENDİRME (REVIEW) ROTALARI
 // ==========================================
+router.get('/pendingReviews/:userId', reviewController.getPendingReviews);
 router.post('/rating/:userId', reviewController.addRating);
 router.put('/rating/:rateId', reviewController.updateRating);
 router.delete('/rating/:rateId', reviewController.deleteRating);

@@ -6,10 +6,15 @@ const AccountSettings = () => {
     
     // Kullanıcı bilgileri state'i
     const [userInfo, setUserInfo] = useState({
-        userName: '',
+        userId: '',
+        username: '',
         email: '',
-        phone: ''
+        phone: '',
+        friendCode: ''
     });
+
+    // Copy toast state
+    const [copied, setCopied] = useState(false);
 
     // Şifre değiştirme state'i
     const [passwords, setPasswords] = useState({
@@ -18,16 +23,33 @@ const AccountSettings = () => {
         confirmPassword: ''
     });
 
-    // Sayfa yüklendiğinde mevcut bilgileri çekme (Mock veya API çağrısı)
+    // Sayfa yüklendiğinde mevcut bilgileri çekme
     useEffect(() => {
-        // Backend'e bağlanırken burayı açabilirsin (fetch('/api/users/me'))
-        // Şimdilik örnek veri gösteriyoruz
-        setUserInfo({
-            userName: 'halisahacikral',
-            email: 'kral@halisaha.com',
-            phone: '0555 555 55 55'
-        });
-    }, []);
+        const fetchProfile = async () => {
+            const userStr = localStorage.getItem("user");
+            if (!userStr) {
+                navigate("/login");
+                return;
+            }
+            const user = JSON.parse(userStr);
+            try {
+                const response = await fetch(`http://localhost:3000/maca-gel/users/me?userId=${user.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setUserInfo({
+                        userId: data._id,
+                        username: data.username,
+                        email: data.email,
+                        phone: data.phone || '',
+                        friendCode: data.friendCode || ''
+                    });
+                }
+            } catch (err) {
+                console.error("Profil yüklenemedi", err);
+            }
+        };
+        fetchProfile();
+    }, [navigate]);
 
     const handleUserInfoChange = (e) => {
         const { name, value } = e.target;
@@ -39,35 +61,91 @@ const AccountSettings = () => {
         setPasswords(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleUpdateProfile = (e) => {
+    const handleUpdateProfile = async (e) => {
         e.preventDefault();
-        
-        axios.put('/api/updateProfile', userInfo)
-        // Profil güncelleme API çağrısı: PUT /api/updateProfile
-        console.log("Profil güncelleniyor: ", userInfo);
-        alert("Profil başarıyla güncellendi! :D");
+        try {
+            const response = await fetch("http://localhost:3000/maca-gel/updateProfile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(userInfo)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert("Profil başarıyla güncellendi!");
+                localStorage.setItem("user", JSON.stringify({
+                    id: data.user._id,
+                    username: data.user.username,
+                    email: data.user.email,
+                    phone: data.user.phone,
+                    friendCode: data.user.friendCode
+                }));
+            } else {
+                alert(data.message || "Güncelleme başarısız.");
+            }
+        } catch (err) {
+            alert("Sunucu hatası.");
+        }
     };
 
-    const handleUpdatePassword = (e) => {
+    const handleUpdatePassword = async (e) => {
         e.preventDefault();
         if (passwords.newPassword !== passwords.confirmPassword) {
             alert("Yeni şifreler uyuşmuyor!");
             return;
         }
-        // Şifre değiştirme API çağrısı: PUT /api/passwordChange
-        console.log("Şifre değiştiriliyor: ", passwords);
-        alert("Şifre başarıyla değiştirildi!");
-        setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        
+        try {
+            const response = await fetch("http://localhost:3000/maca-gel/passwordChange", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: userInfo.userId,
+                    currentPassword: passwords.currentPassword,
+                    newPassword: passwords.newPassword
+                })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert("Şifre başarıyla değiştirildi!");
+                setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            } else {
+                alert(data.message || "Şifre değiştirilemedi.");
+            }
+        } catch (err) {
+            alert("Sunucu hatası.");
+        }
     };
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = async () => {
         const isConfirmed = window.confirm("Hesabını silmek istediğine emin misin? Bu işlem geri alınamaz!");
-        if (isConfirmed) {
-            // Hesap silme API çağrısı: DELETE /api/deleteAccount
-            console.log("Hesap siliniyor...");
-            alert("Hesap başarıyla silindi. Yollarımız ayrıldı :(");
-            navigate('/login');
+        if (!isConfirmed) return;
+        
+        try {
+            const response = await fetch("http://localhost:3000/maca-gel/deleteAccount", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: userInfo.userId })
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert("Hesabın silindi. Yollarımız ayrıldı :(");
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate('/login');
+            } else {
+                // Eğer hata varsa (maçlardan çıkılması gerekiyorsa)
+                alert(data.message || "Hesap silinemedi.");
+            }
+        } catch (err) {
+            alert("Sunucu hatası.");
         }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate('/login');
     };
 
     return (
@@ -90,6 +168,32 @@ const AccountSettings = () => {
 
             <main className="max-w-2xl mx-auto p-4 md:p-6 space-y-8 mt-6">
                 
+                {/* Arkadaş Kodu */}
+                <section className="bg-gradient-to-br from-lime-900 to-lime-800 rounded-xl p-6 shadow-lg border border-lime-700">
+                    <h2 className="text-2xl font-semibold mb-4 text-lime-200 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.658 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        Arkadaş Kodu
+                    </h2>
+                    <p className="text-gray-300 text-sm mb-4">
+                        Arkadaşlarınızı kullanıcı kodunuzu paylaşarak ekliyebilirsiniz. Koda tıklayarak kopyalayabilirsiniz.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            navigator.clipboard.writeText(userInfo.friendCode);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="w-full bg-lime-600 hover:bg-lime-500 active:bg-lime-400 text-white font-black px-6 py-4 rounded-lg transition-all shadow-lg shadow-lime-900/40 uppercase tracking-widest text-center cursor-pointer flex items-center justify-center gap-3"
+                    >
+                        <span className="text-xl">🔗</span>
+                        <span>{userInfo.friendCode || 'Kod Yükleniyor...'}</span>
+                        {copied && <span className="text-sm ml-auto animate-pulse">✓ Kopyalandı!</span>}
+                    </button>
+                </section>
+
                 {/* Profil Bilgileri Formu */}
                 <section className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
                     <h2 className="text-2xl font-semibold mb-6 text-lime-400 flex items-center gap-2">
@@ -104,8 +208,8 @@ const AccountSettings = () => {
                             <label className="block text-sm font-medium text-gray-400 mb-1">Kullanıcı Adı</label>
                             <input
                                 type="text"
-                                name="userName"
-                                value={userInfo.userName}
+                                name="username"
+                                value={userInfo.username}
                                 onChange={handleUserInfoChange}
                                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
                                 required
@@ -129,8 +233,9 @@ const AccountSettings = () => {
                             <input
                                 type="tel"
                                 name="phone"
-                                value={userInfo.phone}
+                                value={userInfo.phone || ''}
                                 onChange={handleUserInfoChange}
+                                placeholder="05XX XXX XXXX"
                                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
                             />
                         </div>
@@ -201,6 +306,28 @@ const AccountSettings = () => {
                             </button>
                         </div>
                     </form>
+                </section>
+
+                {/* Oturum Yönetimi */}
+                <section className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                    <h2 className="text-2xl font-semibold mb-6 text-lime-400 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Oturum
+                    </h2>
+                    <p className="text-gray-400 text-sm mb-6">
+                        Oturumunu kapatmak istersen bu butona tıkla. Tekrar giriş yapmak için şifren gerekecek.
+                    </p>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Çıkış Yap
+                    </button>
                 </section>
 
                 {/* Tehlikeli Alan - Hesap Silme */}

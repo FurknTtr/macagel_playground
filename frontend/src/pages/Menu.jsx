@@ -4,40 +4,208 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 function Menu() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [currentUser, setCurrentUser] = useState({ username: "Giriş Yapılmadı" });
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [isAddFriendModalOpen, setIsAddFriendModalOpen] = useState(false);
+  const [addFriendCode, setAddFriendCode] = useState("");
+  const [isAddingFriend, setIsAddingFriend] = useState(false);
 
   // VERİLER (Backend'den Gelecek)
   const [matches, setMatches] = useState([]);
 
-  // Komponent yüklendiğinde verileri çekecek metodlar
-  useEffect(() => {
-    fetchMyMatches();
-    fetchFriends();
-  }, []);
+  const [pendingReviews, setPendingReviews] = useState([]);
+  const [friends, setFriends] = useState([]);
+  
+  const [isLoadingMatches, setIsLoadingMatches] = useState(false);
 
-  const fetchMyMatches = async () => {
-    /* 
-      TODO: BACKEND BAĞLANTISI (MAÇLAR)
-      1. İstek: GET /api/matches/my-matches (veya uygun endpoint)
-      2. Gönderilecek: Header'da kullanıcı token'ı (JWT)
-      3. Beklenen Yanıt: Kullanıcının içinde bulunduğu veya sahibi olduğu maçların listesi
-      4. İşlem: Gelen veriler formatlanıp setMatches(data) ile state'e kaydedilecek.
-         Gelen verideki tarihe göre 'type' alanı 'upcoming' veya 'past' olarak ayarlanabilir.
-         örn:
-         const response = await fetch('/api/matches/my-matches', { ...headers });
-         const data = await response.json();
-         setMatches(data);
-    */
+  // Fetch fonksiyonlarını useEffect'ten ÖNCE tanımla
+  const fetchUpcomingMatches = async () => {
+    try {
+      setIsLoadingMatches(true);
+      const userStr = localStorage.getItem("user");
+      if(!userStr) return;
+      
+      const user = JSON.parse(userStr);
+      
+      // Backend'den kullanıcının yaklaşan maçlarını çek (bugün ve sonrası)
+      const response = await fetch(`http://localhost:3000/maca-gel/upcomingMatch/${user.id}`);
+      if(response.ok) {
+        const matchesData = await response.json();
+        
+        // Backend'den gelen maçları frontend formatına dönüştür
+        const mappedData = matchesData.map(m => {
+          const ownerId = typeof m.owner === 'object' ? m.owner._id : m.owner;
+          const matchDate = new Date(m.date);
+          
+          return {
+            id: m._id,
+            title: m.name,
+            date: matchDate.toLocaleDateString('tr-TR'),
+            time: matchDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+            location: m.location,
+            capacity: `${m.players.length}/${m.capacity}`,
+            isOwner: ownerId === user.id,
+            type: "upcoming",
+            score: "",
+            inviteCode: m.inviteCode
+          };
+        });
+        
+        setMatches(mappedData);
+      }
+    } catch (error) {
+      console.error("Yaklaşan maçlar çekilemedi", error);
+    } finally {
+      setIsLoadingMatches(false);
+    }
+  };
+
+  const fetchPastMatches = async () => {
+    try {
+      setIsLoadingMatches(true);
+      const userStr = localStorage.getItem("user");
+      if(!userStr) return;
+      
+      const user = JSON.parse(userStr);
+      
+      // Backend'den kullanıcının geçmiş maçlarını çek (şu an öncesi)
+      const response = await fetch(`http://localhost:3000/maca-gel/matchHistory/${user.id}`);
+      if(response.ok) {
+        const matchesData = await response.json();
+        
+        // Backend'den gelen maçları frontend formatına dönüştür
+        const mappedData = matchesData.map(m => {
+          const ownerId = typeof m.owner === 'object' ? m.owner._id : m.owner;
+          const matchDate = new Date(m.date);
+          
+          return {
+            id: m._id,
+            title: m.name,
+            date: matchDate.toLocaleDateString('tr-TR'),
+            time: matchDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+            location: m.location,
+            capacity: `${m.players.length}/${m.capacity}`,
+            isOwner: ownerId === user.id,
+            type: "past",
+            score: "",
+            inviteCode: m.inviteCode
+          };
+        });
+        
+        setMatches(mappedData);
+        
+        // Geçmiş maçlarda pending reviews'ı da çek (değerlendirilmemiş maçlar)
+        fetchPendingReviews();
+      }
+    } catch (error) {
+      console.error("Geçmiş maçlar çekilemedi", error);
+    } finally {
+      setIsLoadingMatches(false);
+    }
+  };
+
+  const fetchPendingReviews = async () => {
+    try {
+      const userStr = localStorage.getItem("user");
+      if(!userStr) return;
+      const user = JSON.parse(userStr);
+
+      const response = await fetch(`http://localhost:3000/maca-gel/pendingReviews/${user.id}`);
+      if(response.ok) {
+        const data = await response.json();
+        // Geçmişteki maçlardan henüz değerlendirilmemişleri set ediyoruz
+        setPendingReviews(data);
+      }
+    } catch (error) {
+      console.error("Değerlendirme bekleyen maçlar çekilemedi", error);
+    }
   };
 
   const fetchFriends = async () => {
-    /* 
-      TODO: BACKEND BAĞLANTISI (ARKADAŞLAR)
-      1. İstek: GET /api/users/me/friends
-      2. Gönderilecek: Header'da kullanıcı token'ı (JWT)
-      3. Beklenen Yanıt: [{ name: "Ahmet", status: "online", _id: "..." }, ...]
-      4. İşlem: setFriends(data)
-    */
+    try {
+      const userStr = localStorage.getItem("user");
+      if(!userStr) return;
+      const user = JSON.parse(userStr);
+      
+      const response = await fetch(`http://localhost:3000/maca-gel/myFriends?userId=${user.id}`);
+      if(response.ok) {
+         const data = await response.json();
+         // Backend'den gelen arkadaş listesini UI formatına çevir
+         const mappedFriends = data.map(f => ({
+            id: f._id,
+            name: f.username,
+            status: "online" // Demo - gerçek uygulamada socket.io ile dinamik olabilir
+         }));
+         setFriends(mappedFriends);
+      } else {
+        console.error("Arkadaşlar getirilemedi:", response.status);
+        setFriends([]); // Hata durumunda boş liste
+      }
+    } catch (error) {
+      console.error("Arkadaşlar çekilemedi", error);
+      setFriends([]); // Hata durumunda boş liste
+    }
   };
+
+  const addFriend = async (e) => {
+    e.preventDefault();
+    if (!addFriendCode.trim()) {
+      alert("Lütfen arkadaş kodunu giriniz");
+      return;
+    }
+
+    setIsAddingFriend(true);
+    try {
+      const userStr = localStorage.getItem("user");
+      if(!userStr) return;
+      const user = JSON.parse(userStr);
+
+      const response = await fetch("http://localhost:3000/maca-gel/addFriend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          friendCode: addFriendCode.toUpperCase()
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert("Arkadaş başarıyla eklendi!");
+        setAddFriendCode("");
+        setIsAddFriendModalOpen(false);
+        fetchFriends(); // Arkadaş listesini yenile
+      } else {
+        alert(data.message || "Arkadaş eklenemedi");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Sunucuya bağlanılamıyor");
+    } finally {
+      setIsAddingFriend(false);
+    }
+  };
+  
+  // Komponent yüklendiğinde verileri çekecek metodlar
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
+    
+    fetchFriends();
+    // İlk açılışta yaklaşan maçları çek
+    fetchUpcomingMatches();
+  }, []); // Sadece ilk mount'te çalış
+
+  // Tab değiştiğinde (tıklandığında) uygun fetch'i çağır
+  useEffect(() => {
+    if (activeTab === "upcoming") {
+      fetchUpcomingMatches();
+    } else {
+      fetchPastMatches();
+    }
+  }, [activeTab]);;
 
   const [editingMatch, setEditingMatch] = useState(null);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({ isOpen: false, matchId: null });
@@ -64,10 +232,61 @@ function Menu() {
     }
   }, [location.state, navigate, location.pathname]);
 
-  const handleSaveEdit = (e) => {
+  const handleSaveEdit = async (e) => {
     e.preventDefault();
-    setMatches(matches.map((m) => (m.id === editingMatch.id ? editingMatch : m)));
-    setEditingMatch(null); // Modalı kapat
+    
+    // Tarihi backend için ISO formatına çevirmeye çalışalım. 
+    // dd.mm.yyyy ss:dd formatındaysa:
+    let dateObj;
+    try {
+      let dParts = editingMatch.date.split(/[./-]/);
+      if(dParts.length === 3) {
+        let day = dParts[0].padStart(2, '0');
+        let month = dParts[1].padStart(2, '0');
+        let year = dParts[2].length === 2 ? `20${dParts[2]}` : dParts[2];
+        let isoStr = `${year}-${month}-${day}T${editingMatch.time}:00`;
+        dateObj = new Date(isoStr);
+      }
+    } catch(err) {
+      console.warn("Tarih dönüştürülemedi:", err);
+    }
+
+    const payload = {
+      matchId: editingMatch.id,
+      name: editingMatch.title,
+      location: editingMatch.location,
+    };
+    
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      payload.userId = user.id;
+    }
+    
+    if (dateObj && !isNaN(dateObj)) {
+      payload.date = dateObj.toISOString();
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/maca-gel/updateMatch`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMatches(matches.map((m) => (m.id === editingMatch.id ? editingMatch : m)));
+        setEditingMatch(null); // Modalı kapat
+        alert("Maç başarıyla güncellendi");
+      } else {
+        alert(data.message || "Maç güncellenemedi!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Bir hata oluştu!");
+    }
   };
 
   const handleRemoveMatchClick = (matchId) => {
@@ -75,27 +294,60 @@ function Menu() {
   };
 
   const confirmRemoveMatch = async () => {
-    /*
-      TODO: MAÇ SİLME
-      1. İstek: DELETE /api/matches/${deleteConfirmModal.matchId}
-      2. İşlem: Başarılı olursa frontend state'ini güncelle:
-         setMatches((prev) => prev.filter((m) => m.id !== deleteConfirmModal.matchId));
-    */
-    // Şimdilik sadece state'ten siliyoruz (optimistic update gibi)
-    setMatches((prev) => prev.filter((m) => m.id !== deleteConfirmModal.matchId));
-    setDeleteConfirmModal({ isOpen: false, matchId: null });
+    try {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        alert("Lütfen önce giriş yapın");
+        return;
+      }
+      const user = JSON.parse(userStr);
+
+      const response = await fetch('http://localhost:3000/maca-gel/deleteMatch', {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          matchId: deleteConfirmModal.matchId,
+          userId: user.id
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMatches((prev) => prev.filter((m) => m.id !== deleteConfirmModal.matchId));
+        alert("Maç başarıyla iptal edildi");
+      } else {
+        alert(data.message || "Maç iptal edilemedi!");
+      }
+    } catch(err) {
+      console.error(err);
+      alert("Hata oluştu");
+    } finally {
+      setDeleteConfirmModal({ isOpen: false, matchId: null });
+    }
   };
 
-  const [friends, setFriends] = useState([]);
-
-  const handleRemoveFriendClick = (name) => {
-    setFriendDeleteModal({ isOpen: true, friendName: name });
+  const handleRemoveFriendClick = (friend) => {
+    setFriendDeleteModal({ isOpen: true, friendName: friend.name, friendId: friend.id });
     setActiveFriendId(null);
   };
 
-  const confirmRemoveFriend = () => {
-    setFriends(friends.filter(f => f.name !== friendDeleteModal.friendName));
-    setFriendDeleteModal({ isOpen: false, friendName: "" });
+  const confirmRemoveFriend = async () => {
+    try {
+      const userStr = localStorage.getItem("user");
+      if(!userStr) return;
+      const user = JSON.parse(userStr);
+      const response = await fetch(`http://localhost:3000/maca-gel/myFriends?userId=${user.id}&friendId=${friendDeleteModal.friendId}`, {
+        method: "DELETE"
+      });
+      if (response.ok) {
+        setFriends(friends.filter(f => f.id !== friendDeleteModal.friendId));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFriendDeleteModal({ isOpen: false, friendName: "", friendId: null });
+    }
   };
 
   const filteredMatches = matches.filter(m => m.type === activeTab);
@@ -117,15 +369,22 @@ function Menu() {
         </div>
         
         <div className="relative flex items-center gap-3">
-          <span className="hidden sm:block text-[11px] font-black text-gray-700 uppercase tracking-widest mt-0.5">Furkan Tatar</span>
+          <span className="hidden sm:block text-[11px] font-black text-gray-700 uppercase tracking-widest mt-0.5">{currentUser.username}</span>
           <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="focus:outline-none transition-transform active:scale-95">
-            <img src="https://ui-avatars.com/api/?name=Furkan+Tatar&background=059669&color=fff" className="w-10 h-10 rounded-full border-2 border-green-500 shadow-md" alt="F" />
+            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.username)}&background=059669&color=fff`} className="w-10 h-10 rounded-full border-2 border-green-500 shadow-md" alt="Profil" />
           </button>
           {isProfileOpen && (
             <div className="absolute right-0 top-12 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-200">
               <Link to="/account-settings" className="block px-4 py-3 text-[11px] font-black text-gray-700 hover:bg-green-50 transition uppercase tracking-wider">⚙️ HESAP AYARLARI</Link>
               <hr className="border-gray-50" />
-              <button className="w-full text-left px-4 py-3 text-[11px] font-black text-red-600 hover:bg-red-50 transition uppercase tracking-wider">🚪 GÜVENLİ ÇIKIŞ</button>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("user");
+                  window.location.href = "/login";
+                }}
+                className="w-full text-left px-4 py-3 text-[11px] font-black text-red-600 hover:bg-red-50 transition uppercase tracking-wider">🚪 GÜVENLİ ÇIKIŞ
+              </button>
             </div>
           )}
         </div>
@@ -138,6 +397,13 @@ function Menu() {
         <main className="flex-1 max-w-4xl flex flex-col gap-10">
           
           <div className="flex gap-10 border-b border-gray-200">
+            {pendingReviews.length > 0 && (
+               <div className="mb-4 bg-orange-50 border border-orange-200 p-4 rounded-xl flex items-center justify-between">
+                 <div className="text-[11px] font-black text-orange-600 uppercase tracking-wide">
+                   ⚠️ Değerlendirilmemiş {pendingReviews.length} Maçınız Var!
+                 </div>
+               </div>
+            )}
             <button 
               onClick={() => setActiveTab("upcoming")}
               className={`pb-5 text-[11px] font-black tracking-[0.2em] relative transition-colors ${activeTab === "upcoming" ? "text-green-600" : "text-gray-400"}`}
@@ -156,7 +422,11 @@ function Menu() {
 
           <div className="flex flex-col gap-6">
             {filteredMatches.map((match) => (
-              <div key={match.id} className="bg-white rounded-3xl border border-gray-100 p-7 transition-all shadow-sm hover:shadow-xl hover:border-green-200 group">
+              <div 
+                key={match.id} 
+                onClick={() => setSelectedMatch(match)}
+                className="bg-white rounded-3xl border border-gray-100 p-7 transition-all shadow-sm hover:shadow-xl hover:border-green-200 group cursor-pointer"
+              >
                 
                 {/* Üst Satır */}
                 <div className="flex justify-between items-start mb-10">
@@ -164,10 +434,9 @@ function Menu() {
                     <h3 className="text-xl font-black text-gray-900 leading-tight uppercase tracking-tight group-hover:text-green-600 transition-colors">
                       {match.title}
                     </h3>
-                    <p className="text-xs text-gray-400 mt-1">Yönetici: {match.manager}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-green-600 uppercase tracking-widest flex items-center justify-end gap-1">📍 {match.location}</p>
+                    <div className="text-[10px] text-gray-500">📍 {match.location}</div>
                     <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase">📅 {match.date}</p>
                   </div>
                 </div>
@@ -210,9 +479,10 @@ function Menu() {
                         🛠️ YÖNET
                       </button>
                     )}
-                    {match.isOwner ? null : match.type === 'upcoming' ? (
-                      <Link to={`/match/${match.id}`} className="bg-gray-100 text-gray-600 px-7 py-3 rounded-2xl text-[10px] font-black hover:bg-gray-200 transition-all uppercase inline-block text-center">📄 DETAY</Link>
-                    ) : (
+                    {match.type === 'upcoming' && (
+                      <Link to={`/match/${match.id}`} className="bg-green-600 text-white px-7 py-3 rounded-2xl text-[10px] font-black hover:bg-green-700 transition-all shadow-lg shadow-green-100 uppercase inline-block text-center">📋 DETAY</Link>
+                    )}
+                    {match.type === 'past' && (
                       <button className="bg-green-600 text-white px-7 py-3 rounded-2xl text-[10px] font-black hover:bg-green-700 transition shadow-lg shadow-green-100 uppercase">⭐ PUAN VER</button>
                     )}
                   </div>
@@ -222,14 +492,26 @@ function Menu() {
           </div>
         </main>
 
-        {/* SAĞ: ARKADAŞ LİSTESİ (En sağa yapışık - Mıknatıslı) --- */}
+        {/* SAĞ: ARKADAŞ LİSTESİ */}
         <aside className="hidden lg:block w-80 h-fit sticky top-28 ml-auto">
+          {/* ARKADAŞ LİSTESİ */}
           <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
             <div className="flex items-center justify-between mb-8 border-b border-gray-50 pb-5">
               <h3 className="font-black text-gray-800 text-[10px] tracking-[0.25em] uppercase">Saha Arkadaşları</h3>
-              <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-full">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[9px] font-black text-green-600 uppercase">{onlineCount} Aktif</span>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-full">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-[9px] font-black text-green-600 uppercase">{friends.length} Arkadaş</span>
+                </div>
+                <button
+                  onClick={() => fetchFriends()}
+                  className="text-gray-400 hover:text-green-600 transition-colors p-1.5 rounded-lg hover:bg-gray-50"
+                  title="Arkadaş listesini yenile"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
               </div>
             </div>
             
@@ -241,7 +523,7 @@ function Menu() {
                     onClick={() => setActiveFriendId(activeFriendId === i ? null : i)}
                   >
                     <div className="relative">
-                      <img src={`https://ui-avatars.com/api/?name=${f.name}&background=random`} className="w-10 h-10 rounded-full border border-gray-50" alt="f" />
+                      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(f.name)}&background=random`} className="w-10 h-10 rounded-full border border-gray-50" alt="f" />
                       {f.status === 'online' && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>}
                     </div>
                     <span className="text-[11px] font-black text-gray-600 group-hover:text-green-600 transition uppercase tracking-tight">{f.name}</span>
@@ -249,9 +531,19 @@ function Menu() {
                   
                   {/* Arkadaş Silme Menüsü */}
                   {activeFriendId === i && (
-                    <div className="absolute right-0 top-10 bg-white rounded-xl shadow-xl border border-gray-100 z-10 w-28 overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="absolute right-0 top-10 bg-white rounded-xl shadow-xl border border-gray-100 z-10 w-40 overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col">
+                      <Link 
+                        to={`/player/${encodeURIComponent(f.name)}`}
+                        onClick={() => setActiveFriendId(null)}
+                        className="w-full text-left px-4 py-3 text-[10px] font-black text-blue-600 hover:bg-blue-50 transition uppercase tracking-widest flex items-center gap-2 border-b border-gray-100"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        PROFİL
+                      </Link>
                       <button 
-                        onClick={() => handleRemoveFriendClick(f.name)}
+                        onClick={() => handleRemoveFriendClick(f)}
                         className="w-full text-left px-4 py-3 text-[10px] font-black text-red-600 hover:bg-red-50 transition uppercase tracking-widest flex items-center gap-2"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,13 +557,73 @@ function Menu() {
               ))}
             </div>
 
-            <button className="w-full mt-10 py-4 bg-gray-50 border-2 border-dashed border-gray-200 text-gray-400 text-[9px] font-black rounded-2xl hover:text-green-600 hover:border-green-200 transition-all uppercase tracking-[0.2em]">
+            <button 
+              onClick={() => setIsAddFriendModalOpen(true)}
+              className="w-full mt-10 py-4 bg-gray-50 border-2 border-dashed border-gray-200 text-gray-400 text-[9px] font-black rounded-2xl hover:text-green-600 hover:border-green-200 transition-all uppercase tracking-[0.2em]">
               + YENİ ARKADAŞ BUL
             </button>
           </div>
         </aside>
 
       </div>
+
+      {/* --- ARKADAŞ EKLEME MODALI --- */}
+      {isAddFriendModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Arkadaş Ekle</h2>
+              <button
+                onClick={() => {
+                  setIsAddFriendModalOpen(false);
+                  setAddFriendCode("");
+                }}
+                className="text-gray-400 hover:text-gray-600 transition text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={addFriend} className="space-y-4">
+              <div>
+                <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">Arkadaşınızın Kodunu Giriniz</label>
+                <input
+                  type="text"
+                  maxLength="6"
+                  value={addFriendCode}
+                  onChange={(e) => setAddFriendCode(e.target.value.toUpperCase())}
+                  placeholder="Örn: ABC123"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-lg font-black text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all uppercase"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddFriendModalOpen(false);
+                    setAddFriendCode("");
+                  }}
+                  className="flex-1 px-6 py-3 rounded-xl text-[10px] font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all uppercase tracking-widest"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAddingFriend}
+                  className={`flex-1 px-6 py-3 rounded-xl text-[10px] font-black text-white transition-all shadow-lg uppercase tracking-widest ${
+                    isAddingFriend ? "bg-green-400" : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {isAddingFriend ? "Ekleniyor..." : "Ekle"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* --- MAÇ DÜZENLEME MODALI --- */}
       {editingMatch && (
