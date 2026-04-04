@@ -13,7 +13,8 @@ function CreateMatch() {
     date: "",
     time: "",
     location: "",
-    capacity: "",
+    teamSize: "6",
+    capacity: 12,
     price: "",
   });
 
@@ -25,6 +26,19 @@ function CreateMatch() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleTeamSizeChange = (size) => {
+    const capacityMap = {
+      "6": 12,
+      "7": 14,
+      "8": 16
+    };
+    setForm((prev) => ({
+      ...prev,
+      teamSize: size,
+      capacity: capacityMap[size]
+    }));
   };
 
   const handleSearchLocation = () => {
@@ -62,9 +76,8 @@ function CreateMatch() {
         name: form.title,
         date: matchDateStr,
         location: form.location || locationQuery || "Bilinmeyen Konum",
-        capacity: parseInt(form.capacity.split("/")[1] || form.capacity || 14),
+        capacity: form.capacity,
         owner: user.id
-        // Modelde price olmadığı için şimdilik eklemiyoruz
       };
 
       const response = await fetch("http://localhost:3000/maca-gel/createMatch", {
@@ -169,8 +182,24 @@ function CreateMatch() {
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1">Kadro Sayısı</label>
-            <input name="capacity" type="text" value={form.capacity} onChange={handleChange} placeholder="Örnek: 12/14" required className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500" />
+            <label className="block text-xs font-black uppercase text-gray-500 mb-3">Kadro Sayısı</label>
+            <div className="flex gap-3">
+              {["6", "7", "8"].map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => handleTeamSizeChange(size)}
+                  className={`flex-1 py-3 px-4 rounded-xl font-black uppercase tracking-wider transition ${
+                    form.teamSize === size
+                      ? "bg-green-600 text-white border-2 border-green-700"
+                      : "bg-gray-100 text-gray-700 border-2 border-gray-300 hover:border-green-500"
+                  }`}
+                >
+                  {size}v{size}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Seçili kapasite: {form.capacity} kişi</p>
           </div>
 
           <div>

@@ -13,7 +13,9 @@ const friendController = require('../controllers/friendController');
 // ==========================================
 router.post('/register', accountController.registerUser);
 router.post('/login', accountController.loginUser);
-router.post('/isForgotPassword', accountController.forgotPassword);
+router.post('/forgot-password', accountController.forgotPassword);
+router.get('/verify-reset-token/:token', accountController.verifyResetToken);
+router.post('/reset-password', accountController.resetPassword);
 router.put('/passwordChange', accountController.changePassword);
 router.get('/users/me', accountController.getMyProfile);
 router.put('/updateProfile', accountController.updateProfile);
@@ -62,6 +64,9 @@ router.get('/playerPreview/:userId', reviewController.getPlayerPreview);
 router.post('/addFriend', friendController.addFriend);
 router.get('/myFriends', friendController.getMyFriends);
 router.delete('/myFriends', friendController.removeFriend);
+router.get('/getPendingRequests', friendController.getPendingRequests);
+router.post('/acceptFriendRequest', friendController.acceptFriendRequest);
+router.post('/rejectFriendRequest', friendController.rejectFriendRequest);
 
 // Son olarak bu haritayı dışa aktarıyoruz
 module.exports = router;

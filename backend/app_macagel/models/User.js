@@ -12,6 +12,9 @@ const userSchema = new mongoose.Schema({
     // --- DETAYLAR (userDetail tablosu) ---
     // Arkadaş listesi (Sadece diğer kullanıcıların ID'lerini referans olarak tutarız)
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    
+    // Bekleme Halindeki Arkadaş İstekleri (kim beni eklemeye çalışıyor)
+    friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
     // --- ÖNİZLEME/İSTATİSTİK (userPreview tablosu) ---
     // Her profil çekildiğinde veritabanını yormamak için bu verileri burada hesaplanmış tutarız
@@ -20,6 +23,10 @@ const userSchema = new mongoose.Schema({
         totalMatches: { type: Number, default: 0 },
         totalRatings: { type: Number, default: 0 }
     },
+
+    // Şifre Sıfırlama için Token
+    resetToken: { type: String, default: null },
+    resetTokenExpiry: { type: Date, default: null },
 
     // Kağıda aldığın harika not: Soft Delete mantığı!
     isActive: { type: Boolean, default: true } 

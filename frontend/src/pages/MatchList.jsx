@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { SEHIRLER } from "../components/Sehirler";
 
 function Discover() {
+  const [user, setUser] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -39,8 +40,12 @@ function Discover() {
     searchTerm: ""
   });
 
-  // Komponent yüklendiğinde pazar yerindeki maçları çekecek metod
+  // Komponent yüklendiğinde user'ı localStorage'dan yükle ve maçları çek
   React.useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+    }
     fetchDiscoverMatches(pagination.currentPage);
   }, []);
 
@@ -213,7 +218,7 @@ function Discover() {
               <span className="text-gray-400">🔍</span>
               <input 
                 type="text" 
-                placeholder="Maç adı veya şehir ara..." 
+                placeholder="Maç adı ile ara..." 
                 className="bg-transparent border-none focus:outline-none text-xs ml-2 font-bold"
                 style={{ width: "200px" }}
                 value={searchTerm}
@@ -343,7 +348,11 @@ function Discover() {
           <Link to="/menu" className="text-[10px] font-black text-gray-400 hover:text-green-600 transition uppercase tracking-widest">Panelime Dön</Link>
           <div className="relative">
             <button onClick={() => setIsProfileOpen(!isProfileOpen)}>
-              <img src="https://ui-avatars.com/api/?name=Furkan+Tatar&background=059669&color=fff" className="w-10 h-10 rounded-full border-2 border-green-500 shadow-md" alt="F" />
+              <img 
+                src={`https://ui-avatars.com/api/?name=${user?.username || "User"}&background=059669&color=fff`}
+                className="w-10 h-10 rounded-full border-2 border-green-500 shadow-md" 
+                alt={user?.username?.charAt(0) || "U"} 
+              />
             </button>
             {isProfileOpen && (
               <div className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50">

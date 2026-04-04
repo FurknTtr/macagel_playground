@@ -9,6 +9,8 @@ function Menu() {
   const [isAddFriendModalOpen, setIsAddFriendModalOpen] = useState(false);
   const [addFriendCode, setAddFriendCode] = useState("");
   const [isAddingFriend, setIsAddingFriend] = useState(false);
+  const [friendTab, setFriendTab] = useState("friends"); // arkadaşlarım / requests
+  const [pendingFriendRequests, setPendingFriendRequests] = useState([]);
 
   // VERİLER (Backend'den Gelecek)
   const [matches, setMatches] = useState([]);
@@ -144,6 +146,91 @@ function Menu() {
     } catch (error) {
       console.error("Arkadaşlar çekilemedi", error);
       setFriends([]); // Hata durumunda boş liste
+    }
+  };
+
+  const fetchPendingRequests = async () => {
+    try {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        setPendingFriendRequests([]);
+        return;
+      }
+      const user = JSON.parse(userStr);
+      
+      const response = await fetch(`http://localhost:3000/maca-gel/getPendingRequests?userId=${user.id}`);
+      if(response.ok) {
+         const data = await response.json();
+         const mappedRequests = data.map(r => ({
+           id: r._id,
+           name: r.username,
+           email: r.email
+         }));
+         setPendingFriendRequests(mappedRequests);
+      } else {
+        console.error("İstekler getirilemedi:", response.status);
+        setPendingFriendRequests([]);
+      }
+    } catch (err) {
+      console.error("İstekler çekilemedi", err);
+      setPendingFriendRequests([]);
+    }
+  };
+
+  const handleAcceptFriendRequest = async (requesterId) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
+
+      const response = await fetch("http://localhost:3000/maca-gel/acceptFriendRequest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          friendId: requesterId
+        })
+      });
+
+      if (response.ok) {
+        alert("Arkadaş isteği kabul edildi!");
+        fetchPendingRequests();
+        fetchFriends();
+      } else {
+        const data = await response.json();
+        alert(data.message || "İstek kabul edilemedi");
+      }
+    } catch (err) {
+      console.error("Hata oluştu", err);
+      alert("Hata oluştu");
+    }
+  };
+
+  const handleRejectFriendRequest = async (requesterId) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
+
+      const response = await fetch("http://localhost:3000/maca-gel/rejectFriendRequest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          friendId: requesterId
+        })
+      });
+
+      if (response.ok) {
+        alert("Arkadaş isteği reddedildi");
+        fetchPendingRequests();
+      } else {
+        const data = await response.json();
+        alert(data.message || "İstek reddedilemedi");
+      }
+    } catch (err) {
+      console.error("Hata oluştu", err);
+      alert("Hata oluştu");
     }
   };
 
@@ -496,27 +583,62 @@ function Menu() {
         <aside className="hidden lg:block w-80 h-fit sticky top-28 ml-auto">
           {/* ARKADAŞ LİSTESİ */}
           <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
-            <div className="flex items-center justify-between mb-8 border-b border-gray-50 pb-5">
-              <h3 className="font-black text-gray-800 text-[10px] tracking-[0.25em] uppercase">Saha Arkadaşları</h3>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-full">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-[9px] font-black text-green-600 uppercase">{friends.length} Arkadaş</span>
-                </div>
-                <button
-                  onClick={() => fetchFriends()}
-                  className="text-gray-400 hover:text-green-600 transition-colors p-1.5 rounded-lg hover:bg-gray-50"
-                  title="Arkadaş listesini yenile"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-              </div>
+            {/* SEKMELERİ */}
+            <div className="flex gap-3 mb-6 border-b border-gray-100 justify-center">
+              <button
+                onClick={() => {
+                  setFriendTab("friends");
+                  fetchFriends();
+                }}
+                className={`pb-4 px-4 text-[10px] font-black uppercase tracking-widest transition-all text-center ${
+                  friendTab === "friends"
+                    ? "text-green-600 border-b-2 border-green-600"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                Arkadaşlarım ({friends.length})
+              </button>
+              <button
+                onClick={() => {
+                  setFriendTab("requests");
+                  fetchPendingRequests();
+                }}
+                className={`pb-4 px-4 text-[10px] font-black uppercase tracking-widest transition-all relative text-center ${
+                  friendTab === "requests"
+                    ? "text-green-600 border-b-2 border-green-600"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                İstekler
+                {pendingFriendRequests.length > 0 && (
+                  <span className="absolute -top-3 -right-2 bg-red-500 text-white text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center">
+                    {pendingFriendRequests.length}
+                  </span>
+                )}
+              </button>
             </div>
-            
-            <div className="space-y-6">
-              {friends.map((f, i) => (
+
+            {/* ARKADAŞLARIMI SEKMESİ */}
+            {friendTab === "friends" && (
+              <div>
+                <div className="flex items-center justify-between mb-6 pb-5">
+                  <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-full">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-[9px] font-black text-green-600 uppercase">{friends.length} Arkadaş</span>
+                  </div>
+                  <button
+                    onClick={() => fetchFriends()}
+                    className="text-gray-400 hover:text-green-600 transition-colors p-1.5 rounded-lg hover:bg-gray-50"
+                    title="Arkadaş listesini yenile"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  {friends.map((f, i) => (
                 <div key={i} className="flex items-center justify-between group relative">
                   <div 
                     className="flex items-center gap-4 cursor-pointer hover:translate-x-1 transition-transform w-full"
@@ -554,8 +676,51 @@ function Menu() {
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* İSTEKLER SEKMESİ */}
+            {friendTab === "requests" && (
+              <div>
+                {pendingFriendRequests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400 text-[10px] font-black uppercase">Henüz arkadaş isteği yok</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingFriendRequests.map((req, i) => (
+                      <div key={i} className="flex items-center justify-between bg-gray-50 p-4 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(req.name)}&background=random`} className="w-10 h-10 rounded-full border border-gray-200" alt={req.name} />
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-gray-800 uppercase">{req.name}</span>
+                            <span className="text-[8px] text-gray-400">{req.email}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAcceptFriendRequest(req.id)}
+                            className="w-8 h-8 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all flex items-center justify-center text-lg"
+                            title="Kabul Et"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => handleRejectFriendRequest(req.id)}
+                            className="w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all flex items-center justify-center text-lg"
+                            title="Reddet"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <button 
               onClick={() => setIsAddFriendModalOpen(true)}

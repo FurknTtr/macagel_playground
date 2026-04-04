@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const User = require("../models/User"); 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mailService = require("../utils/email");
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
@@ -83,16 +84,124 @@ const forgotPassword = async function (req, res) {
       return createResponse(res, 404, { message: "Bu e-posta adresine kayıtlı kullanıcı bulunamadı" });
     }
     
-    // Gerçek bir sistemde Nodemailer vb. ile e-posta gönderilir.
-    // Şimdilik demo amaçlı bir token dönüyoruz.
+    // Reset token oluştur (15 dakika geçerli)
     const resetToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15m' });
+    const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 dakika
+    
+    // User'a token'ı kaydet
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = resetTokenExpiry;
+    await user.save();
+    
+    // Email gönder
+    try {
+      await mailService.sendForgotPasswordEmail(user.email, resetToken);
+    } catch (emailError) {
+      console.error('Email gönderme hatası:', emailError);
+      // Email gönderilemese bile başarılı response dön (user UX açısından)
+    }
 
     createResponse(res, 200, { 
-      message: "Şifre sıfırlama talimatları e-posta adresinize gönderildi (Simülasyon)",
-      resetToken 
+      message: "Şifre sıfırlama linki e-posta adresinize gönderildi"
     });
   } catch (error) {
     createResponse(res, 500, { message: "İşlem başarısız, sunucu hatası" });
+  }
+};
+
+const verifyResetToken = async function (req, res) {
+  try {
+    const { token } = req.params;
+    
+    if (!token) {
+      return createResponse(res, 400, { message: "Token bulunamadı" });
+    }
+    
+    // Token payload'ını çöz
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Kullanıcıyı bul ve token'ı kontrol et
+    const user = await User.findById(decoded.userId);
+    if (!user || user.resetToken !== token) {
+      return createResponse(res, 401, { message: "Geçersiz token" });
+    }
+    
+    // Token süresini kontrol et
+    if (user.resetTokenExpiry < new Date()) {
+      return createResponse(res, 401, { message: "Token süresi dolmuş" });
+    }
+    
+    createResponse(res, 200, { message: "Token geçerli" });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return createResponse(res, 401, { message: "Token süresi dolmuş" });
+    }
+    createResponse(res, 401, { message: "Geçersiz token" });
+  }
+};
+
+const resetPassword = async function (req, res) {
+  try {
+    const { token, password, passwordConfirm } = req.body;
+    
+    // Validasyon
+    if (!token || !password || !passwordConfirm) {
+      return createResponse(res, 400, { message: "Eksik bilgi" });
+    }
+    
+    if (password !== passwordConfirm) {
+      return createResponse(res, 400, { message: "Şifreler eşleşmiyor" });
+    }
+    
+    if (password.length < 6) {
+      return createResponse(res, 400, { message: "Şifre en az 6 karakter olmalı" });
+    }
+    
+    // Token'ı çöz
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Kullanıcıyı bul
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return createResponse(res, 404, { message: "Kullanıcı bulunamadı" });
+    }
+    
+    // Token kontrolü
+    if (user.resetToken !== token) {
+      return createResponse(res, 401, { message: "Geçersiz token" });
+    }
+    
+    // Token süresini kontrol et
+    if (user.resetTokenExpiry < new Date()) {
+      return createResponse(res, 401, { message: "Token süresi dolmuş, lütfen yeniden deneyin" });
+    }
+    
+    // Şifre hash'le
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Şifreyi güncelle ve token'ı temizle
+    user.password = hashedPassword;
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+    
+    // Onay emaili gönder (opsiyonel)
+    try {
+      await mailService.sendWelcomeEmail(user.email, user.username);
+    } catch (emailError) {
+      console.error('Onay emaili gönderme hatası:', emailError);
+    }
+    
+    createResponse(res, 200, { message: "Şifreniz başarıyla güncellendi" });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return createResponse(res, 401, { message: "Token süresi dolmuş" });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return createResponse(res, 401, { message: "Geçersiz token" });
+    }
+    createResponse(res, 500, { message: "Şifre güncellenemedi" });
   }
 };
 
@@ -189,6 +298,8 @@ module.exports = {
   registerUser,
   loginUser,
   forgotPassword,
+  verifyResetToken,
+  resetPassword,
   changePassword,
   getMyProfile,
   updateProfile,

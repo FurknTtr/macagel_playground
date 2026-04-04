@@ -8,6 +8,8 @@ import PlayerProfile from "../pages/PlayerProfile";
 import CreateMatch from "../pages/CreateMatch";
 import Location from "../pages/Location";
 import AccountSettings from "../pages/AccountSettings";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 import App from "../App";
 
 // İleride farklı sayfalar geldikçe buraya ekleyeceğiz (Örn: Home, Register)
@@ -27,6 +29,14 @@ export const router = createBrowserRouter([
       {
         path: "/register",
         element: <SignUp />,
+      },
+      {
+        path: "/forgot-password",
+        element: <ForgotPassword />,
+      },
+      {
+        path: "/reset-password/:token",
+        element: <ResetPassword />,
       },
       {
         path: "/menu",
