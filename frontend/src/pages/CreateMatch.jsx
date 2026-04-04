@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SEHIRLER } from "../components/Sehirler";
+import { API_BASE_URL } from "../config/api";
 
 function CreateMatch() {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ function CreateMatch() {
         owner: user.id
       };
 
-      const response = await fetch("http://localhost:3000/maca-gel/createMatch", {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/createMatch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
 import SixPosition, { 
   initialSixPositions,
   formation_1_2_2_1,
@@ -114,7 +115,7 @@ function Match() {
       setCurrentUser(currentUserData);
 
       // Backend'den match detaylarını ve oyuncuları çek
-      const response = await fetch(`http://localhost:3000/maca-gel/getMatch/${matchId}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/getMatch/${matchId}`);
       
       if (!response.ok) {
         console.error("Match getirilemedi:", response.status);
@@ -233,7 +234,7 @@ function Match() {
       }
 
       // Backend'e mevkiye katılma isteği yolla
-      const response = await fetch("http://localhost:3000/maca-gel/joinPosition", {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/joinPosition`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -265,7 +266,7 @@ function Match() {
       if (!user.id) return alert("Önce giriş yapmalısınız");
 
       // Backend'e maçtan ayrılma isteği yolla
-      const response = await fetch(`http://localhost:3000/maca-gel/leave/${user.id}`, {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/leave/${user.id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ matchId: matchId })
@@ -292,7 +293,7 @@ function Match() {
       if (!user.id) return alert("Önce giriş yapmalısınız");
 
       // Backend'e oyuncu atma isteği yolla (sadece yönetici yapabilir)
-      const response = await fetch(`http://localhost:3000/maca-gel/leave/${confirmModal.posUserId}`, {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/leave/${confirmModal.posUserId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ matchId: matchId, operationType: "kick", requesterId: user.id })
@@ -475,7 +476,7 @@ function Match() {
                               return;
                             }
 
-                            const response = await fetch("http://localhost:3000/maca-gel/addFriend", {
+                            const response = await fetch(`${API_BASE_URL}/maca-gel/addFriend`, {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({

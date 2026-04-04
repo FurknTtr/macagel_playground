@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { SEHIRLER } from "../components/Sehirler";
+import { API_BASE_URL } from "../config/api";
 
 function Discover() {
   const [user, setUser] = useState(null);
@@ -52,7 +53,7 @@ function Discover() {
   const fetchDiscoverMatches = async (page = 1) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:3000/maca-gel/getAllMatches?page=${page}&limit=10`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/getAllMatches?page=${page}&limit=10`);
       
       if (!response.ok) throw new Error("Maçlar çekilemedi");
       
@@ -100,7 +101,7 @@ function Discover() {
         queryParams += `&matchDate=${selectedDate}`;
       }
 
-      const response = await fetch(`http://localhost:3000/maca-gel/searchMatch?${queryParams}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/searchMatch?${queryParams}`);
       
       if (!response.ok) throw new Error("Arama başarısız");
       
@@ -148,7 +149,7 @@ function Discover() {
         queryParams += `&matchDate=${selectedDate}`;
       }
 
-      const response = await fetch(`http://localhost:3000/maca-gel/filterMatchesByCity?${queryParams}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/filterMatchesByCity?${queryParams}`);
       
       if (!response.ok) throw new Error("Filtrele başarısız");
       
@@ -311,7 +312,7 @@ function Discover() {
                       }
                       const user = JSON.parse(userStr);
 
-                      const response = await fetch(`http://localhost:3000/maca-gel/inviteCode`, {
+                      const response = await fetch(`${API_BASE_URL}/maca-gel/inviteCode`, {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({

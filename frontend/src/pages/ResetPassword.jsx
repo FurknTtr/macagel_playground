@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config/api';
 
 export default function ResetPassword() {
     const { token } = useParams();
@@ -17,7 +18,7 @@ export default function ResetPassword() {
         const verifyToken = async () => {
             try {
                 const response = await fetch(
-                    `http://localhost:3000/maca-gel/verify-reset-token/${token}`
+                    `${API_BASE_URL}/maca-gel/verify-reset-token/${token}`
                 );
                 
                 if (response.ok) {
@@ -56,7 +57,7 @@ export default function ResetPassword() {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:3000/maca-gel/reset-password', {
+            const response = await fetch(`${API_BASE_URL}/maca-gel/reset-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

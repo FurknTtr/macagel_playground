@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
 
 function Menu() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -30,7 +31,7 @@ function Menu() {
       const user = JSON.parse(userStr);
       
       // Backend'den kullanıcının yaklaşan maçlarını çek (bugün ve sonrası)
-      const response = await fetch(`http://localhost:3000/maca-gel/upcomingMatch/${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/upcomingMatch/${user.id}`);
       if(response.ok) {
         const matchesData = await response.json();
         
@@ -71,7 +72,7 @@ function Menu() {
       const user = JSON.parse(userStr);
       
       // Backend'den kullanıcının geçmiş maçlarını çek (şu an öncesi)
-      const response = await fetch(`http://localhost:3000/maca-gel/matchHistory/${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/matchHistory/${user.id}`);
       if(response.ok) {
         const matchesData = await response.json();
         
@@ -112,7 +113,7 @@ function Menu() {
       if(!userStr) return;
       const user = JSON.parse(userStr);
 
-      const response = await fetch(`http://localhost:3000/maca-gel/pendingReviews/${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/pendingReviews/${user.id}`);
       if(response.ok) {
         const data = await response.json();
         // Geçmişteki maçlardan henüz değerlendirilmemişleri set ediyoruz
@@ -129,7 +130,7 @@ function Menu() {
       if(!userStr) return;
       const user = JSON.parse(userStr);
       
-      const response = await fetch(`http://localhost:3000/maca-gel/myFriends?userId=${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/myFriends?userId=${user.id}`);
       if(response.ok) {
          const data = await response.json();
          // Backend'den gelen arkadaş listesini UI formatına çevir
@@ -158,7 +159,7 @@ function Menu() {
       }
       const user = JSON.parse(userStr);
       
-      const response = await fetch(`http://localhost:3000/maca-gel/getPendingRequests?userId=${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/getPendingRequests?userId=${user.id}`);
       if(response.ok) {
          const data = await response.json();
          const mappedRequests = data.map(r => ({
@@ -183,7 +184,7 @@ function Menu() {
       if (!userStr) return;
       const user = JSON.parse(userStr);
 
-      const response = await fetch("http://localhost:3000/maca-gel/acceptFriendRequest", {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/acceptFriendRequest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -212,7 +213,7 @@ function Menu() {
       if (!userStr) return;
       const user = JSON.parse(userStr);
 
-      const response = await fetch("http://localhost:3000/maca-gel/rejectFriendRequest", {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/rejectFriendRequest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -247,7 +248,7 @@ function Menu() {
       if(!userStr) return;
       const user = JSON.parse(userStr);
 
-      const response = await fetch("http://localhost:3000/maca-gel/addFriend", {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/addFriend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -355,7 +356,7 @@ function Menu() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/maca-gel/updateMatch`, {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/updateMatch`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -389,7 +390,7 @@ function Menu() {
       }
       const user = JSON.parse(userStr);
 
-      const response = await fetch('http://localhost:3000/maca-gel/deleteMatch', {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/deleteMatch`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -424,7 +425,7 @@ function Menu() {
       const userStr = localStorage.getItem("user");
       if(!userStr) return;
       const user = JSON.parse(userStr);
-      const response = await fetch(`http://localhost:3000/maca-gel/myFriends?userId=${user.id}&friendId=${friendDeleteModal.friendId}`, {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/myFriends?userId=${user.id}&friendId=${friendDeleteModal.friendId}`, {
         method: "DELETE"
       });
       if (response.ok) {

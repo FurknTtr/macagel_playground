@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
 
 function PlayerProfile() {
   const { id } = useParams();
@@ -23,7 +24,7 @@ function PlayerProfile() {
 
   const fetchPlayerProfile = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/maca-gel/playerPreview/${id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/playerPreview/${id}`);
       if (response.ok) {
         const data = await response.json();
         console.log("🔍 Backend'den gelen data.player:", data.player);
@@ -86,7 +87,7 @@ function PlayerProfile() {
       }
 
       if (editingCommentId) {
-        const response = await fetch(`http://localhost:3000/maca-gel/rating/${editingCommentId}`, {
+        const response = await fetch(`${API_BASE_URL}/maca-gel/rating/${editingCommentId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ rating: newRating, comment: newComment })
@@ -111,7 +112,7 @@ function PlayerProfile() {
           alert(`Hata: ${errorData.message || "Değerlendirme güncellenemedi"}`);
         }
       } else {
-        const response = await fetch(`http://localhost:3000/maca-gel/rating/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/maca-gel/rating/${id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reviewerId: currentUser.id, rating: newRating, comment: newComment })
@@ -166,7 +167,7 @@ function PlayerProfile() {
 
   const confirmDeleteComment = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/maca-gel/rating/${deleteConfirmModal.commentId}`, {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/rating/${deleteConfirmModal.commentId}`, {
         method: 'DELETE'
       });
       if (response.ok) {

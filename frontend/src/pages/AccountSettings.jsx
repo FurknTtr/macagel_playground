@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config/api';
 
 const AccountSettings = () => {
     const navigate = useNavigate();
@@ -33,7 +34,7 @@ const AccountSettings = () => {
             }
             const user = JSON.parse(userStr);
             try {
-                const response = await fetch(`http://localhost:3000/maca-gel/users/me?userId=${user.id}`);
+                const response = await fetch(`${API_BASE_URL}/maca-gel/users/me?userId=${user.id}`);
                 if (response.ok) {
                     const data = await response.json();
                     setUserInfo({
@@ -64,7 +65,7 @@ const AccountSettings = () => {
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch("http://localhost:3000/maca-gel/updateProfile", {
+            const response = await fetch(`${API_BASE_URL}/maca-gel/updateProfile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(userInfo)
@@ -95,7 +96,7 @@ const AccountSettings = () => {
         }
         
         try {
-            const response = await fetch("http://localhost:3000/maca-gel/passwordChange", {
+            const response = await fetch(`${API_BASE_URL}/maca-gel/passwordChange`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -121,7 +122,7 @@ const AccountSettings = () => {
         if (!isConfirmed) return;
         
         try {
-            const response = await fetch("http://localhost:3000/maca-gel/deleteAccount", {
+            const response = await fetch(`${API_BASE_URL}/maca-gel/deleteAccount`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: userInfo.userId })
