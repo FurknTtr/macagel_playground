@@ -19,7 +19,7 @@ const app = express();
 // Middleware'ler
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://macagel-frontend.vercel.app'
+    ? 'https://macagel.vercel.app'
     : ['http://localhost:3000', 'http://localhost:5173'], // Vite port
   credentials: true
 };
