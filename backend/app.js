@@ -17,7 +17,13 @@ const macaGelRouter = require('./app_macagel/routes/index.js');
 const app = express();
 
 // Middleware'ler
-app.use(cors()); // CORS AKTIF
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://macagel-frontend.vercel.app'
+    : ['http://localhost:3000', 'http://localhost:5173'], // Vite port
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(logger('dev'));
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: false }));
