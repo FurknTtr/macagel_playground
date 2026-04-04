@@ -29,6 +29,11 @@ const addRating = async function (req, res) {
       return createResponse(res, 400, { message: "Değerlendirme başarısız oldu" });
     }
 
+    // Kendini değerlendiremezsin kontrolü
+    if (user._id.toString() === reviewerId.toString()) {
+      return createResponse(res, 400, { message: "Kendini değerlendiremezsin" });
+    }
+
     const newRating = new Rating({
         targetUser: user._id,
         reviewer: reviewerId,
@@ -44,6 +49,7 @@ const addRating = async function (req, res) {
     createResponse(res, 400, { message: "Değerlendirme başarısız oldu" });
   }
 };
+
 
 const getPendingReviews = async function (req, res) {
   try {

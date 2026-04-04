@@ -45,7 +45,25 @@ const addFriend = async function (req, res) {
       return createResponse(res, 400, { message: "Bu kişiye zaten istek gönderdin" });
     }
 
-    // İsteği gönder (hedef user'ın friendRequests'ine ekle)
+    // Karşılıklı istek mi? (hedef user zaten bana istek atmış mı?)
+    if (user.friendRequests.includes(actualFriendId)) {
+      // Otomatik kabul et - her iki tarafta da arkadaş yap
+      user.friends.push(actualFriendId);
+      targetUser.friends.push(userId);
+      
+      // İsteği sil
+      user.friendRequests = user.friendRequests.filter(f => f.toString() !== actualFriendId);
+      
+      await user.save();
+      await targetUser.save();
+
+      return createResponse(res, 200, { 
+        message: "Karşılıklı istek otomatik kabul edildi, arkadaş oldunuz!",
+        friends: user.friends
+      });
+    }
+
+    // Normal istek gönder (hedef user'ın friendRequests'ine ekle)
     targetUser.friendRequests.push(userId);
     await targetUser.save();
 
@@ -57,6 +75,7 @@ const addFriend = async function (req, res) {
     createResponse(res, 400, { message: "Arkadaş isteği gönderilemedi" });
   }
 };
+
 
 const getMyFriends = async function (req, res) {
   try {
@@ -89,14 +108,25 @@ const removeFriend = async function (req, res) {
     const { userId, friendId } = req.query;
     
     const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
+
+    if (!user || !friend) {
+      return createResponse(res, 404, { message: "Kullanıcı bulunamadı" });
+    }
+
+    // Her iki tarafta da arkadaş listesinden sil
     user.friends = user.friends.filter(f => f.toString() !== friendId);
+    friend.friends = friend.friends.filter(f => f.toString() !== userId);
+    
     await user.save();
+    await friend.save();
 
     createResponse(res, 200, { message: "Arkadaş silindi" });
   } catch (error) {
     createResponse(res, 400, { message: "Arkadaş silinemedi" });
   }
 };
+
 
 // Beklemede olan arkadaş istekleri
 const getPendingRequests = async function (req, res) {
