@@ -93,13 +93,10 @@ const forgotPassword = async function (req, res) {
     user.resetTokenExpiry = resetTokenExpiry;
     await user.save();
     
-    // Email gönder
-    try {
-      await mailService.sendForgotPasswordEmail(user.email, resetToken);
-    } catch (emailError) {
-      console.error('Email gönderme hatası:', emailError);
-      // Email gönderilemese bile başarılı response dön (user UX açısından)
-    }
+    // Email gönder (arka planda, response bekleme)
+    mailService.sendForgotPasswordEmail(user.email, resetToken).catch(err => {
+      console.error('Email gönderme hatası:', err);
+    });
 
     createResponse(res, 200, { 
       message: "Şifre sıfırlama linki e-posta adresinize gönderildi"
