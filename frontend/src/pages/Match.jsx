@@ -216,80 +216,110 @@ function Match() {
     }
   };
 
-  const confirmAction = async () => {
+  const handleJoinPosition = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       if (!user.id) return alert("Önce giriş yapmalısınız");
 
-      if (confirmModal.type === "join") {
-        // Kullanıcı zaten başka bir pozisyonda varsa kontrol et
-        const userAlreadyInPosition = positions.find(
-          pos => pos.userId === user.id && pos.id !== confirmModal.posId
-        );
-        
-        if (userAlreadyInPosition) {
-          alert("Birden fazla pozisyona katılamazsın");
-          setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null });
-          return;
-        }
+      // Kullanıcı zaten başka bir pozisyonda varsa kontrol et
+      const userAlreadyInPosition = positions.find(
+        pos => pos.userId === user.id && pos.id !== confirmModal.posId
+      );
+      
+      if (userAlreadyInPosition) {
+        alert("Birden fazla pozisyona katılamazsın");
+        setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null });
+        return;
+      }
 
-        // Backend'e mevkii'ye katılma isteği yolla (joinPosition)
-        const response = await fetch("http://localhost:3000/maca-gel/joinPosition", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            matchId: matchId,
-            userId: user.id,
-            positionId: confirmModal.posId,
-            position: confirmModal.posRole
-          })
-        });
+      // Backend'e mevkiye katılma isteği yolla
+      const response = await fetch("http://localhost:3000/maca-gel/joinPosition", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          matchId: matchId,
+          userId: user.id,
+          positionId: confirmModal.posId,
+          position: confirmModal.posRole
+        })
+      });
 
-        if (response.ok) {
-          setPositions(prev => prev.map(pos => 
-            pos.id === confirmModal.posId ? { ...pos, user: user.username } : pos
-          ));
-        } else {
-          alert("Mevkiye katılırken hata oluştu!");
-        }
-
-      } else if (confirmModal.type === "leave") {
-        // Backend'e maçtan ayrılma isteği yolla (leaveOrKickPlayer)
-        const response = await fetch(`http://localhost:3000/maca-gel/leave/${user.id}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ matchId: matchId })
-        });
-
-        if (response.ok) {
-          setPositions(prev => prev.map(pos => 
-            pos.id === confirmModal.posId ? { ...pos, user: "Boş" } : pos
-          ));
-        } else {
-          alert("Maçtan ayrılırken hata oluştu!");
-        }
-
-      } else if (confirmModal.type === "kick") {
-        // Backend'e oyuncu atma isteği yolla (sadece yönetici yapabilir)
-        const response = await fetch(`http://localhost:3000/maca-gel/leave/${confirmModal.posUserId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ matchId: matchId, operationType: "kick", requesterId: user.id })
-        });
-
-        if (response.ok) {
-          setPositions(prev => prev.map(pos => 
-            pos.id === confirmModal.posId ? { ...pos, user: "Boş", userId: null } : pos
-          ));
-        } else {
-          alert("Oyuncu atılırken hata oluştu!");
-        }
+      if (response.ok) {
+        setPositions(prev => prev.map(pos => 
+          pos.id === confirmModal.posId ? { ...pos, user: user.username } : pos
+        ));
+      } else {
+        alert("Mevkiye katılırken hata oluştu!");
       }
     } catch (err) {
       console.error(err);
       alert("İşlem gerçekleştirilemedi");
     } finally {
       setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null });
+    }
+  };
+
+  const handleLeavePosition = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (!user.id) return alert("Önce giriş yapmalısınız");
+
+      // Backend'e maçtan ayrılma isteği yolla
+      const response = await fetch(`http://localhost:3000/maca-gel/leave/${user.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matchId: matchId })
+      });
+
+      if (response.ok) {
+        setPositions(prev => prev.map(pos => 
+          pos.id === confirmModal.posId ? { ...pos, user: "Boş" } : pos
+        ));
+      } else {
+        alert("Maçtan ayrılırken hata oluştu!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("İşlem gerçekleştirilemedi");
+    } finally {
+      setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null });
+    }
+  };
+
+  const handleKickPlayer = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (!user.id) return alert("Önce giriş yapmalısınız");
+
+      // Backend'e oyuncu atma isteği yolla (sadece yönetici yapabilir)
+      const response = await fetch(`http://localhost:3000/maca-gel/leave/${confirmModal.posUserId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matchId: matchId, operationType: "kick", requesterId: user.id })
+      });
+
+      if (response.ok) {
+        setPositions(prev => prev.map(pos => 
+          pos.id === confirmModal.posId ? { ...pos, user: "Boş", userId: null } : pos
+        ));
+      } else {
+        alert("Oyuncu atılırken hata oluştu!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("İşlem gerçekleştirilemedi");
+    } finally {
+      setConfirmModal({ isOpen: false, type: "", posId: null, posUserId: null });
+    }
+  };
+
+  const confirmAction = async () => {
+    if (confirmModal.type === "join") {
+      await handleJoinPosition();
+    } else if (confirmModal.type === "leave") {
+      await handleLeavePosition();
+    } else if (confirmModal.type === "kick") {
+      await handleKickPlayer();
     }
   };
 
