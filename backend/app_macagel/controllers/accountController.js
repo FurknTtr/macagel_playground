@@ -94,14 +94,14 @@ const forgotPassword = async function (req, res) {
     await user.save();
     
     // Email gönder (arka planda, response bekleme)
-    mailService.sendForgotPasswordEmail(user.email, resetToken).catch(err => {
-      console.error('Email gönderme hatası:', err);
-    });
+    // Mail servisi zaten kendi içinde hatayı yakalayıp logluyor
+    mailService.sendForgotPasswordEmail(user.email, resetToken);
 
     createResponse(res, 200, { 
       message: "Şifre sıfırlama linki e-posta adresinize gönderildi"
     });
   } catch (error) {
+    console.error('forgotPassword error:', error);
     createResponse(res, 500, { message: "İşlem başarısız, sunucu hatası" });
   }
 };
