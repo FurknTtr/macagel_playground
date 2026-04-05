@@ -390,14 +390,13 @@ function Menu() {
       }
       const user = JSON.parse(userStr);
 
-      const response = await fetch(`${API_BASE_URL}/maca-gel/deleteMatch`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          matchId: deleteConfirmModal.matchId,
-          userId: user.id
-        })
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/maca-gel/deleteMatch?matchId=${deleteConfirmModal.matchId}&userId=${user.id}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" }
+        }
+      );
 
       const data = await response.json();
 

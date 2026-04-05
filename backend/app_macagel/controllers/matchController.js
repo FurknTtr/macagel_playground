@@ -283,7 +283,7 @@ const updateMatch = async function (req, res) {
 // Maç İptal Et (Soft-Delete: isActive = false)
 const deleteMatch = async function (req, res) {
   try {
-    const { matchId, userId } = req.body; // Body'den al
+    const { matchId, userId } = req.query; // Query parametrelerinden al
     
     if (!matchId) {
       return createResponse(res, 400, { message: "Maç ID gerekli" });
