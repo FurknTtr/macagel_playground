@@ -268,18 +268,31 @@ const deleteAccount = async function (req, res) {
   try {
     const { userId } = req.body;
     
-    // İleri tarihli katıldığı maçları kontrol et
     const Match = require('../models/Match');
+    
+    // 1. İleri tarihli katıldığı maçları kontrol et
     const upcomingMatches = await Match.find({
       isActive: true,
       date: { $gte: new Date() },
       'players.user': userId
     });
     
-    // Eğer ileri tarihli maç varsa, silinemesin
     if (upcomingMatches.length > 0) {
       return createResponse(res, 400, { 
         message: "Hesabını silmeden önce katıldığın bütün maçlardan çıkmalısın!" 
+      });
+    }
+    
+    // 2. Sahip olduğu (owner) maçları kontrol et
+    const ownedMatches = await Match.find({
+      isActive: true,
+      date: { $gte: new Date() },
+      owner: userId
+    });
+    
+    if (ownedMatches.length > 0) {
+      return createResponse(res, 400, { 
+        message: "Hesabını silmeden önce oluşturduğun tüm maçları iptal etmelisin!" 
       });
     }
     

@@ -60,17 +60,20 @@ function Discover() {
       const data = await response.json();
       
       // Backend'den gelen matches'i frontend formatına çevir
-      const mappedMatches = data.matches.map(m => ({
-        id: m._id,
-        title: m.name,
-        manager: m.owner.username,
-        location: m.location,
-        date: new Date(m.date).toLocaleDateString('tr-TR'),
-        time: new Date(m.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-        capacity: `${m.players.length}/${m.capacity}`,
-        price: "150₺",
-        pitchType: "closed"
-      }));
+      // Owner null olabilir, optional chaining ile kontrol et
+      const mappedMatches = data.matches
+        .filter(m => m.owner !== null) // Owner null ise filtrele
+        .map(m => ({
+          id: m._id,
+          title: m.name,
+          manager: m.owner?.username || 'Bilinmiyor',
+          location: m.location,
+          date: new Date(m.date).toLocaleDateString('tr-TR'),
+          time: new Date(m.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+          capacity: `${m.players.length}/${m.capacity}`,
+          price: "150₺",
+          pitchType: "closed"
+        }));
       
       setAllMatches(mappedMatches);
       setPagination(data.pagination);
@@ -107,18 +110,20 @@ function Discover() {
       
       const data = await response.json();
       
-      // Arama sonuçlarını formatla
-      const mappedMatches = data.matches.map(m => ({
-        id: m._id,
-        title: m.name,
-        manager: m.owner.username,
-        location: m.location,
-        date: new Date(m.date).toLocaleDateString('tr-TR'),
-        time: new Date(m.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-        capacity: `${m.players.length}/${m.capacity}`,
-        price: "150₺",
-        pitchType: "closed"
-      }));
+      // Arama sonuçlarını formatla (owner null olabilir - optional chaining kullan)
+      const mappedMatches = data.matches
+        .filter(m => m.owner !== null)
+        .map(m => ({
+          id: m._id,
+          title: m.name,
+          manager: m.owner?.username || 'Bilinmiyor',
+          location: m.location,
+          date: new Date(m.date).toLocaleDateString('tr-TR'),
+          time: new Date(m.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+          capacity: `${m.players.length}/${m.capacity}`,
+          price: "150₺",
+          pitchType: "closed"
+        }));
       
       setSearchResults(mappedMatches);
       setSearchPagination(data.pagination);
@@ -155,18 +160,20 @@ function Discover() {
       
       const data = await response.json();
       
-      // Sonuçları formatla
-      const mappedMatches = data.matches.map(m => ({
-        id: m._id,
-        title: m.name,
-        manager: m.owner.username,
-        location: m.location,
-        date: new Date(m.date).toLocaleDateString('tr-TR'),
-        time: new Date(m.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-        capacity: `${m.players.length}/${m.capacity}`,
-        price: "150₺",
-        pitchType: "closed"
-      }));
+      // Sonuçları formatla (owner null olabilir - optional chaining kullan)
+      const mappedMatches = data.matches
+        .filter(m => m.owner !== null)
+        .map(m => ({
+          id: m._id,
+          title: m.name,
+          manager: m.owner?.username || 'Bilinmiyor',
+          location: m.location,
+          date: new Date(m.date).toLocaleDateString('tr-TR'),
+          time: new Date(m.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+          capacity: `${m.players.length}/${m.capacity}`,
+          price: "150₺",
+          pitchType: "closed"
+        }));
       
       setSearchResults(mappedMatches);
       setSearchPagination(data.pagination);

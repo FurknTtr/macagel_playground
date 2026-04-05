@@ -26,14 +26,21 @@ const getAllMatches = async function (req, res) {
       .populate('players.user', 'username email _id stats')
       .skip(skip)
       .limit(limit)
-      .sort('date');  // Tarihe göre artan sırada sırala
+      .sort('date')  // Tarihe göre artan sırada sırala
+      .lean(); // Performans için lean() kullan
+    
+    // Owner silinmiş match'leri filtrele
+    const validMatches = matches.filter(m => m.owner !== null);
     
     // Toplam maç sayısını al (pagination için)
-    const totalMatches = await Match.countDocuments({ isActive: true });
+    const totalMatches = await Match.countDocuments({ 
+      isActive: true,
+      date: { $gte: new Date() }
+    });
     const totalPages = Math.ceil(totalMatches / limit);
 
     createResponse(res, 200, {
-      matches,
+      matches: validMatches,
       pagination: {
         currentPage: page,
         pageSize: limit,
@@ -108,12 +115,16 @@ const searchMatch = async function (req, res) {
       .populate('players.user', 'username email _id stats')
       .skip(skip)
       .limit(limit)
-      .sort('date');
+      .sort('date')
+      .lean();
+
+    // Owner silinmiş match'leri filtrele
+    const validMatches = matches.filter(m => m.owner !== null);
 
     const totalPages = Math.ceil(totalMatches / limit);
 
     createResponse(res, 200, {
-      matches,
+      matches: validMatches,
       pagination: {
         currentPage: page,
         pageSize: limit,
@@ -161,12 +172,16 @@ const filterMatchesByCity = async function (req, res) {
       .populate('players.user', 'username email _id stats')
       .skip(skip)
       .limit(limit)
-      .sort('date');
+      .sort('date')
+      .lean();
+
+    // Owner silinmiş match'leri filtrele
+    const validMatches = matches.filter(m => m.owner !== null);
 
     const totalPages = Math.ceil(totalMatches / limit);
 
     createResponse(res, 200, {
-      matches,
+      matches: validMatches,
       pagination: {
         currentPage: page,
         pageSize: limit,
