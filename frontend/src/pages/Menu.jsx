@@ -185,7 +185,7 @@ function Menu() {
       const user = JSON.parse(userStr);
 
       const response = await fetch(`${API_BASE_URL}/maca-gel/acceptFriendRequest`, {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
@@ -214,7 +214,7 @@ function Menu() {
       const user = JSON.parse(userStr);
 
       const response = await fetch(`${API_BASE_URL}/maca-gel/rejectFriendRequest`, {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,

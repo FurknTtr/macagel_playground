@@ -65,8 +65,8 @@ router.post('/addFriend', friendController.addFriend);
 router.get('/myFriends', friendController.getMyFriends);
 router.delete('/myFriends', friendController.removeFriend);
 router.get('/getPendingRequests', friendController.getPendingRequests);
-router.post('/acceptFriendRequest', friendController.acceptFriendRequest);
-router.post('/rejectFriendRequest', friendController.rejectFriendRequest);
+router.put('/acceptFriendRequest', friendController.acceptFriendRequest);
+router.put('/rejectFriendRequest', friendController.rejectFriendRequest);
 
 // Son olarak bu haritayı dışa aktarıyoruz
 module.exports = router;
