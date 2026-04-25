@@ -7,12 +7,13 @@ const matchController = require('../controllers/matchController');
 const matchActionController = require('../controllers/matchActionController');
 const reviewController = require('../controllers/reviewController');
 const friendController = require('../controllers/friendController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // ==========================================
 // HESABIM (ACCOUNT) ROTALARI
 // ==========================================
-router.post('/register', accountController.registerUser);
-router.post('/login', accountController.loginUser);
+router.post('/register', accountController.registerUser); //Authmiddleware'e uğramaz, çünkü henüz token'ı yok parçalanacak.
+router.post('/login', accountController.loginUser);  //Authmiddleware'e yok aynı sebepten.
 router.post('/forgot-password', accountController.forgotPassword);
 router.get('/verify-reset-token/:token', accountController.verifyResetToken);
 router.post('/reset-password', accountController.resetPassword);
@@ -62,11 +63,11 @@ router.get('/playerPreview/:userId', reviewController.getPlayerPreview);
 // ARKADAŞLAR (FRIENDS) ROTALARI
 // ==========================================
 router.post('/addFriend', friendController.addFriend);
-router.get('/myFriends', friendController.getMyFriends);
+router.get('/myFriends', authMiddleware, friendController.getMyFriends);
 router.delete('/myFriends', friendController.removeFriend);
-router.get('/getPendingRequests', friendController.getPendingRequests);
-router.put('/acceptFriendRequest', friendController.acceptFriendRequest);
-router.put('/rejectFriendRequest', friendController.rejectFriendRequest);
+router.get('/getPendingRequests', authMiddleware, friendController.getPendingRequests);
+router.put('/acceptFriendRequest', authMiddleware, friendController.acceptFriendRequest);
+router.put('/rejectFriendRequest', authMiddleware, friendController.rejectFriendRequest);
 
 // Son olarak bu haritayı dışa aktarıyoruz
 module.exports = router;

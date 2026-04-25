@@ -79,7 +79,7 @@ const addFriend = async function (req, res) {
 
 const getMyFriends = async function (req, res) {
   try {
-    const { userId } = req.query;
+    const userId  = req.userId;
     
     // Validasyon
     if (!userId) {
@@ -131,13 +131,13 @@ const removeFriend = async function (req, res) {
 // Beklemede olan arkadaş istekleri
 const getPendingRequests = async function (req, res) {
   try {
-    const { userId } = req.query;
+    const userId  = req.userId;
     
     if (!userId) {
       return createResponse(res, 400, { message: "userId parametresi gerekli" });
     }
 
-    const user = await User.findById(userId).populate("friendRequests", "username _id email");
+    const user = await User.findById(userId).populate("friendRequests", "username email");
     
     if (!user) {
       return createResponse(res, 404, { message: "Kullanıcı bulunamadı" });
@@ -152,18 +152,21 @@ const getPendingRequests = async function (req, res) {
 // Arkadaş isteğini kabul et
 const acceptFriendRequest = async function (req, res) {
   try {
-    const { userId, friendId } = req.body;
+    const userId = req.userId;
+    const friendEmail = req.body.friendEmail;
     
-    if (!userId || !friendId) {
-      return createResponse(res, 400, { message: "userId ve friendId gerekli" });
+    if (!userId || !friendEmail) {
+      return createResponse(res, 400, { message: "userId ve friendEmail gerekli" });
     }
 
     const user = await User.findById(userId);
-    const friend = await User.findById(friendId);
+    const friend = await User.findOne({ email: friendEmail });
 
     if (!user || !friend) {
       return createResponse(res, 404, { message: "Kullanıcı bulunamadı" });
     }
+
+    const friendId = friend._id;
 
     // İstek var mı kontrol et
     if (!user.friendRequests.includes(friendId)) {
@@ -175,7 +178,7 @@ const acceptFriendRequest = async function (req, res) {
     friend.friends.push(userId);
     
     // İsteği sil
-    user.friendRequests = user.friendRequests.filter(f => f.toString() !== friendId);
+    user.friendRequests = user.friendRequests.filter(f => f.toString() !== friendId.toString());
     
     await user.save();
     await friend.save();
@@ -192,20 +195,24 @@ const acceptFriendRequest = async function (req, res) {
 // Arkadaş isteğini reddet
 const rejectFriendRequest = async function (req, res) {
   try {
-    const { userId, friendId } = req.body;
+    const userId = req.userId;
+    const friendEmail= req.body.friendEmail;
     
-    if (!userId || !friendId) {
-      return createResponse(res, 400, { message: "userId ve friendId gerekli" });
+    if (!userId || !friendEmail) {
+      return createResponse(res, 400, { message: "userId ve friendEmail gerekli" });
     }
 
     const user = await User.findById(userId);
+    const friend = await User.findOne({ email: friendEmail });
 
-    if (!user) {
+    if (!user || !friend) {
       return createResponse(res, 404, { message: "Kullanıcı bulunamadı" });
     }
 
+    const friendId = friend._id;
+
     // İsteği sil
-    user.friendRequests = user.friendRequests.filter(f => f.toString() !== friendId);
+    user.friendRequests = user.friendRequests.filter(f => f.toString() !== friendId.toString());
     await user.save();
 
     createResponse(res, 200, { 

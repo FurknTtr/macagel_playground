@@ -70,7 +70,7 @@ const loginUser = async function (req, res) {
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
-    createResponse(res, 200, { message: "Giriş başarılı", token, user: { id: user._id, username: user.username, email: user.email, phone: user.phone, friendCode: user.friendCode } });
+    createResponse(res, 200, { message: "Giriş başarılı", token, user: { username: user.username, email: user.email, phone: user.phone, friendCode: user.friendCode } });
   } catch (error) {
     createResponse(res, 500, { message: "Sunucu hatası" });
   }

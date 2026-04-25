@@ -126,11 +126,14 @@ function Menu() {
 
   const fetchFriends = async () => {
     try {
-      const userStr = localStorage.getItem("user");
-      if(!userStr) return;
-      const user = JSON.parse(userStr);
+      const token = localStorage.getItem("token");
       
-      const response = await fetch(`${API_BASE_URL}/maca-gel/myFriends?userId=${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/myFriends`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if(response.ok) {
          const data = await response.json();
          // Backend'den gelen arkadaş listesini UI formatına çevir
@@ -152,18 +155,21 @@ function Menu() {
 
   const fetchPendingRequests = async () => {
     try {
-      const userStr = localStorage.getItem("user");
-      if (!userStr) {
+      const token = localStorage.getItem("token");
+      if (!token) {
         setPendingFriendRequests([]);
         return;
       }
-      const user = JSON.parse(userStr);
       
-      const response = await fetch(`${API_BASE_URL}/maca-gel/getPendingRequests?userId=${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/getPendingRequests`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if(response.ok) {
          const data = await response.json();
          const mappedRequests = data.map(r => ({
-           id: r._id,
            name: r.username,
            email: r.email
          }));
@@ -178,18 +184,23 @@ function Menu() {
     }
   };
 
-  const handleAcceptFriendRequest = async (requesterId) => {
+  const handleAcceptFriendRequest = async (requesterEmail) => {
     try {
-      const userStr = localStorage.getItem("user");
-      if (!userStr) return;
-      const user = JSON.parse(userStr);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Oturum süreniz dolmuş, lütfen tekrar giriş yapın.");
+        window.location.href = "/login";
+        return;
+      }
 
       const response = await fetch(`${API_BASE_URL}/maca-gel/acceptFriendRequest`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
-          userId: user.id,
-          friendId: requesterId
+          friendEmail: requesterEmail
         })
       });
 
@@ -207,18 +218,23 @@ function Menu() {
     }
   };
 
-  const handleRejectFriendRequest = async (requesterId) => {
+  const handleRejectFriendRequest = async (requesterEmail) => {
     try {
-      const userStr = localStorage.getItem("user");
-      if (!userStr) return;
-      const user = JSON.parse(userStr);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Oturum süreniz dolmuş, lütfen tekrar giriş yapın.");
+        window.location.href = "/login";
+        return;
+      }
 
       const response = await fetch(`${API_BASE_URL}/maca-gel/rejectFriendRequest`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
-          userId: user.id,
-          friendId: requesterId
+          friendEmail: requesterEmail
         })
       });
 
@@ -701,14 +717,14 @@ function Menu() {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleAcceptFriendRequest(req.id)}
+                            onClick={() => handleAcceptFriendRequest(req.email)}
                             className="w-8 h-8 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all flex items-center justify-center text-lg"
                             title="Kabul Et"
                           >
                             ✓
                           </button>
                           <button
-                            onClick={() => handleRejectFriendRequest(req.id)}
+                            onClick={() => handleRejectFriendRequest(req.email)}
                             className="w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all flex items-center justify-center text-lg"
                             title="Reddet"
                           >
