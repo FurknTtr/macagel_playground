@@ -262,13 +262,18 @@ function Match() {
 
   const handleLeavePosition = async () => {
     try {
+      
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       if (!user.id) return alert("Önce giriş yapmalısınız");
 
+      const token = localStorage.getItem("token");
       // Backend'e maçtan ayrılma isteği yolla
       const response = await fetch(`${API_BASE_URL}/maca-gel/leave/${user.id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ matchId: matchId })
       });
 
@@ -292,10 +297,14 @@ function Match() {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       if (!user.id) return alert("Önce giriş yapmalısınız");
 
+      const token = localStorage.getItem("token");
       // Backend'e oyuncu atma isteği yolla (sadece yönetici yapabilir)
       const response = await fetch(`${API_BASE_URL}/maca-gel/leave/${confirmModal.posUserId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ matchId: matchId, operationType: "kick", requesterId: user.id })
       });
 

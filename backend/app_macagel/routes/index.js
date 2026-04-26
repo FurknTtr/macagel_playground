@@ -47,7 +47,7 @@ router.put('/inviteCode', matchController.joinMatchWithCode);     // Kod ile ma�
 // ==========================================
 // MAÇ AKSİYONLARI (MATCH ACTIONS) ROTALARI
 // ==========================================
-router.delete('/leave/:userId', matchActionController.leaveOrKickPlayer);
+router.delete('/leave/:userId', authMiddleware,matchActionController.leaveOrKickPlayer);
 router.post('/joinPosition', matchActionController.joinPosition);
 
 // ==========================================
