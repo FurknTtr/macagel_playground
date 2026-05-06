@@ -6,15 +6,11 @@ const createResponse = function (res, status, content) {
   res.status(status).json(content);
 };
 
-const getCurrentUserId = function (req) {
-  return req.userId || req.body?.userId || req.query?.userId || null;
-};
-
 const addRating = async function (req, res) {
   try {
     const { userId } = req.params;
     const { rating, comment } = req.body;
-    const reviewerId = getCurrentUserId(req);
+    const reviewerId = req.userId;
 
     if (!userId || !reviewerId || !rating || !comment) {
       return createResponse(res, 400, { message: "Değerlendirme başarısız oldu" });
@@ -83,7 +79,7 @@ const updateRating = async function (req, res) {
   try {
     const { rateId } = req.params;
     const { rating, comment } = req.body;
-    const userId = getCurrentUserId(req);
+    const userId = req.userId;
 
     if (!userId) {
       return createResponse(res, 401, { message: "Yetkilendirme gerekli" });
@@ -108,7 +104,7 @@ const updateRating = async function (req, res) {
 const deleteRating = async function (req, res) {
   try {
     const { rateId } = req.params;
-    const userId = getCurrentUserId(req);
+    const userId = req.userId;
 
     if (!userId) {
       return createResponse(res, 401, { message: "Yetkilendirme gerekli" });

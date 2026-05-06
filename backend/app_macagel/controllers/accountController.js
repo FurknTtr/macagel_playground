@@ -10,10 +10,6 @@ const createResponse = function (res, status, content) {
   res.status(status).json(content);
 };
 
-const getCurrentUserId = function (req) {
-  return req.userId || req.body?.userId || req.query?.userId || null;
-};
-
 const registerUser = async function (req, res) {
   try {
     const { username, email, phone, password } = req.body;
@@ -209,7 +205,7 @@ const resetPassword = async function (req, res) {
 const changePassword = async function (req, res) {
   try {
     const { currentPassword, newPassword } = req.body;
-    const userId = getCurrentUserId(req);
+    const userId = req.userId;
 
     if (!userId) {
       return createResponse(res, 401, { message: "Yetkilendirme gerekli" });
@@ -239,8 +235,8 @@ const changePassword = async function (req, res) {
 
 const getMyProfile = async function (req, res) {
   try {
-    const userId = getCurrentUserId(req);
-    
+    const userId = req.userId;
+
     if (!userId) {
       return createResponse(res, 401, { message: "Yetkilendirme gerekli" });
     }

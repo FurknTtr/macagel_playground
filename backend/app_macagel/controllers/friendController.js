@@ -5,13 +5,9 @@ const createResponse = function (res, status, content) {
   res.status(status).json(content);
 };
 
-const getCurrentUserId = function (req) {
-  return req.userId || req.body?.userId || req.query?.userId || null;
-};
-
 const addFriend = async function (req, res) {
   try {
-    const userId = getCurrentUserId(req);
+    const userId = req.userId;
     const { friendCode, friendId } = req.body;
 
     if (!userId) {
