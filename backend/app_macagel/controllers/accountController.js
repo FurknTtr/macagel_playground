@@ -10,6 +10,10 @@ const createResponse = function (res, status, content) {
   res.status(status).json(content);
 };
 
+const getCurrentUserId = function (req) {
+  return req.userId || req.body?.userId || req.query?.userId || null;
+};
+
 const registerUser = async function (req, res) {
   try {
     const { username, email, phone, password } = req.body;
@@ -204,7 +208,12 @@ const resetPassword = async function (req, res) {
 
 const changePassword = async function (req, res) {
   try {
-    const { userId, currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body;
+    const userId = getCurrentUserId(req);
+
+    if (!userId) {
+      return createResponse(res, 401, { message: "Yetkilendirme gerekli" });
+    }
 
     const user = await User.findById(userId);
     if (!user) {
@@ -230,10 +239,10 @@ const changePassword = async function (req, res) {
 
 const getMyProfile = async function (req, res) {
   try {
-    const { userId } = req.query; // frontend'den gelen userId
+    const userId = getCurrentUserId(req);
     
     if (!userId) {
-      return createResponse(res, 400, { message: "userId parametresi gerekli" });
+      return createResponse(res, 401, { message: "Yetkilendirme gerekli" });
     }
 
     const user = await User.findById(userId).select("username email phone friendCode _id");

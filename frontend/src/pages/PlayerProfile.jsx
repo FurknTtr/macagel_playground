@@ -81,7 +81,12 @@ function PlayerProfile() {
 
     try {
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const token = localStorage.getItem("token");
       if (!currentUser.id) {
+        alert("Giriş yapmalısın!");
+        return;
+      }
+      if (!token) {
         alert("Giriş yapmalısın!");
         return;
       }
@@ -89,7 +94,10 @@ function PlayerProfile() {
       if (editingCommentId) {
         const response = await fetch(`${API_BASE_URL}/maca-gel/rating/${editingCommentId}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
           body: JSON.stringify({ rating: newRating, comment: newComment })
         });
         if (response.ok) {
@@ -114,8 +122,11 @@ function PlayerProfile() {
       } else {
         const response = await fetch(`${API_BASE_URL}/maca-gel/rating/${id}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reviewerId: currentUser.id, rating: newRating, comment: newComment })
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ rating: newRating, comment: newComment })
         });
         if (response.ok) {
           const data = await response.json();
@@ -167,8 +178,12 @@ function PlayerProfile() {
 
   const confirmDeleteComment = async () => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE_URL}/maca-gel/rating/${deleteConfirmModal.commentId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       if (response.ok) {
         setPlayer(prev => {

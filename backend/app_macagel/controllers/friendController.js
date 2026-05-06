@@ -5,9 +5,18 @@ const createResponse = function (res, status, content) {
   res.status(status).json(content);
 };
 
+const getCurrentUserId = function (req) {
+  return req.userId || req.body?.userId || req.query?.userId || null;
+};
+
 const addFriend = async function (req, res) {
   try {
-    const { userId, friendCode, friendId } = req.body;
+    const userId = getCurrentUserId(req);
+    const { friendCode, friendId } = req.body;
+
+    if (!userId) {
+      return createResponse(res, 401, { message: "Yetkilendirme gerekli" });
+    }
     
     if (!friendCode && !friendId) {
       return createResponse(res, 400, { message: "Arkadaş kodu veya ID gerekli" });

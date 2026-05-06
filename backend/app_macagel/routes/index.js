@@ -7,6 +7,7 @@ const matchController = require('../controllers/matchController');
 const matchActionController = require('../controllers/matchActionController');
 const reviewController = require('../controllers/reviewController');
 const friendController = require('../controllers/friendController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // ==========================================
 // HESABIM (ACCOUNT) ROTALARI
@@ -16,8 +17,8 @@ router.post('/login', accountController.loginUser);
 router.post('/forgot-password', accountController.forgotPassword);
 router.get('/verify-reset-token/:token', accountController.verifyResetToken);
 router.post('/reset-password', accountController.resetPassword);
-router.put('/passwordChange', accountController.changePassword);
-router.get('/users/me', accountController.getMyProfile);
+router.put('/passwordChange', authMiddleware, accountController.changePassword);
+router.get('/users/me', authMiddleware, accountController.getMyProfile);
 router.put('/updateProfile', accountController.updateProfile);
 router.delete('/deleteAccount', accountController.deleteAccount);
 
@@ -53,15 +54,15 @@ router.post('/joinPosition', matchActionController.joinPosition);
 // ÖNİZLEME VE DEĞERLENDİRME (REVIEW) ROTALARI
 // ==========================================
 router.get('/pendingReviews/:userId', reviewController.getPendingReviews);
-router.post('/rating/:userId', reviewController.addRating);
-router.put('/rating/:rateId', reviewController.updateRating);
-router.delete('/rating/:rateId', reviewController.deleteRating);
+router.post('/rating/:userId', authMiddleware, reviewController.addRating);
+router.put('/rating/:rateId', authMiddleware, reviewController.updateRating);
+router.delete('/rating/:rateId', authMiddleware, reviewController.deleteRating);
 router.get('/playerPreview/:userId', reviewController.getPlayerPreview);
 
 // ==========================================
 // ARKADAŞLAR (FRIENDS) ROTALARI
 // ==========================================
-router.post('/addFriend', friendController.addFriend);
+router.post('/addFriend', authMiddleware, friendController.addFriend);
 router.get('/myFriends', friendController.getMyFriends);
 router.delete('/myFriends', friendController.removeFriend);
 router.get('/getPendingRequests', friendController.getPendingRequests);
