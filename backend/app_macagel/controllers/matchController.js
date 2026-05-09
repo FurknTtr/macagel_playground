@@ -365,7 +365,7 @@ const getMatch = async function (req, res) {
 // Yaklaşan Maçlar (kullanıcının, bugün ve sonrası)
 const getUpcomingMatches = async function (req, res) {
   try {
-    const { userId } = req.params;
+    const userId = req.userId;
     
     // Saat farklarından (TZ) dolayı bugünün maçları kaybolmasın diye gece yarısını baz alalım
     let today = new Date();
