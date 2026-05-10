@@ -33,13 +33,13 @@ router.get('/filterMatchesByCity', matchController.filterMatchesByCity);  // Ma�
 
 // Maç Detayları
 router.get('/getMatch/:matchId', matchController.getMatch);       // Maç detayları + oyuncuları (positionId ile)
-router.get('/upcomingMatch', authMiddleware, matchController.getUpcomingMatches);  // Kullanıcının yaklaşan maçları
-router.get('/matchHistory/:userId', matchController.getMatchHistory);      // Kullanıcının geçmiş maçları
+router.get('/upcomingMatch', authMiddleware, matchController.getUpcomingMatches);  // Kullanıcının yaklaşan maçları 
+router.get('/matchHistory', authMiddleware, matchController.getMatchHistory);      // Kullanıcının geçmiş maçları
 
 // Maç Yönetimi (Oluştur, Güncelle, Sil)
-router.post('/createMatch', matchController.createMatch);         // Yeni maç oluştur
-router.put('/updateMatch', matchController.updateMatch);          // Maç bilgilerini güncelle
-router.delete('/deleteMatch', matchController.deleteMatch);       // Maç iptal et (soft-delete)
+router.post('/createMatch', authMiddleware, matchController.createMatch);         // Yeni maç oluştur
+router.put('/updateMatch', authMiddleware, matchController.updateMatch);          // Maç bilgilerini güncelle
+router.delete('/deleteMatch', authMiddleware, matchController.deleteMatch);       // Maç iptal et (soft-delete)
 
 // Maça Katılma
 router.put('/inviteCode', matchController.joinMatchWithCode);     // Kod ile maça katıl
@@ -64,10 +64,11 @@ router.get('/playerPreview/:userId', reviewController.getPlayerPreview);
 // ==========================================
 router.get('/myFriends', authMiddleware, friendController.getMyFriends);
 router.post('/addFriend', authMiddleware, friendController.addFriend);
-router.delete('/myFriends', friendController.removeFriend);
 router.get('/getPendingRequests', authMiddleware, friendController.getPendingRequests);
 router.put('/acceptFriendRequest', authMiddleware, friendController.acceptFriendRequest);
 router.put('/rejectFriendRequest', authMiddleware, friendController.rejectFriendRequest);
+router.delete('/myFriends', authMiddleware, friendController.removeFriend);
+
 
 // Son olarak bu haritayı dışa aktarıyoruz
 module.exports = router;
