@@ -66,13 +66,13 @@ function Menu() {
   const fetchPastMatches = async () => {
     try {
       setIsLoadingMatches(true);
-      const userStr = localStorage.getItem("user");
-      if(!userStr) return;
-      
-      const user = JSON.parse(userStr);
+      const token = localStorage.getItem("token");
+      if(!token) return;
       
       // Backend'den kullanıcının geçmiş maçlarını çek (şu an öncesi)
-      const response = await fetch(`${API_BASE_URL}/maca-gel/matchHistory/${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/matchHistory`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if(response.ok) {
         const matchesData = await response.json();
         
@@ -345,10 +345,10 @@ function Menu() {
       location: editingMatch.location,
     };
     
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      payload.userId = user.id;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Lütfen önce giriş yapın");
+      return;
     }
     
     if (dateObj && !isNaN(dateObj)) {
@@ -358,7 +358,10 @@ function Menu() {
     try {
       const response = await fetch(`${API_BASE_URL}/maca-gel/updateMatch`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -383,20 +386,24 @@ function Menu() {
 
   const confirmRemoveMatch = async () => {
     try {
-      const userStr = localStorage.getItem("user");
-      if (!userStr) {
+      const token = localStorage.getItem("token");
+      if (!token) {
         alert("Lütfen önce giriş yapın");
         return;
       }
-      const user = JSON.parse(userStr);
 
-      const response = await fetch(
-        `${API_BASE_URL}/maca-gel/deleteMatch?matchId=${deleteConfirmModal.matchId}&userId=${user.id}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" }
-        }
-      );
+      const payload = {
+        matchId: deleteConfirmModal.matchId
+      };
+
+      const response = await fetch(`${API_BASE_URL}/maca-gel/deleteMatch`, {
+        method: "DELETE",
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
 
       const data = await response.json();
 

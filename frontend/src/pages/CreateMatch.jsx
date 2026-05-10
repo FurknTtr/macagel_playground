@@ -72,18 +72,25 @@ function CreateMatch() {
 
       // Tarih ve saati birleştirip tek bir tarih objesi (Date objesi için string format) yapalım
       const matchDateStr = `${form.date}T${form.time}:00`;
+      const token = localStorage.getItem("token");
+      if(!token) {
+        alert("Lütfen önce giriş yapın");
+        return;
+      }
       
       const payload = {
         name: form.title,
         date: matchDateStr,
         location: form.location || locationQuery || "Bilinmeyen Konum",
-        capacity: form.capacity,
-        owner: user.id
+        capacity: form.capacity
       };
 
       const response = await fetch(`${API_BASE_URL}/maca-gel/createMatch`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
       

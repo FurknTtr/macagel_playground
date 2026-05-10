@@ -236,7 +236,8 @@ const joinMatchWithCode = async function (req, res) {
 // Yeni Maç Oluştur
 const createMatch = async function (req, res) {
   try {
-    const { name, location, date, capacity, owner, inviteCode } = req.body;
+    const { name, location, date, capacity, inviteCode } = req.body;
+    const owner = req.userId; // JWT token'dan alınan user ID
     
     // inviteCode ve code field'larını generat et
     const generatedCode = inviteCode || Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -269,7 +270,8 @@ const createMatch = async function (req, res) {
 // Maç Bilgilerini Güncelle (ad, lokasyon, tarih, kapasite)
 const updateMatch = async function (req, res) {
   try {
-    const { matchId, userId } = req.body; // Body'den al matchId ve userId
+    const { matchId } = req.body; // Body'den al matchId
+    const userId = req.userId; // JWT token'dan alınan user ID
     
     if (!matchId) {
       return createResponse(res, 400, { message: "Maç ID gerekli" });
@@ -286,8 +288,8 @@ const updateMatch = async function (req, res) {
       return createResponse(res, 403, { message: "Sadece maç yöneticisi güncelleyebilir" });
     }
     
-    // Güncellenecek fieldler (matchId ve userId hariç)
-    const { matchId: _, userId: __, ...updateData } = req.body;
+    // Güncellenecek fieldler (matchId hariç)
+    const { matchId: _, ...updateData } = req.body;
     const updatedMatch = await Match.findByIdAndUpdate(matchId, updateData, { new: true });
     createResponse(res, 200, updatedMatch);
   } catch (error) {
@@ -298,7 +300,8 @@ const updateMatch = async function (req, res) {
 // Maç İptal Et (Soft-Delete: isActive = false)
 const deleteMatch = async function (req, res) {
   try {
-    const { matchId, userId } = req.query; // Query parametrelerinden al
+    const { matchId } = req.body; // Body'den al matchId
+    const userId = req.userId; // JWT token'dan alınan user ID
     
     if (!matchId) {
       return createResponse(res, 400, { message: "Maç ID gerekli" });
@@ -386,7 +389,8 @@ const getUpcomingMatches = async function (req, res) {
 // Maç Geçmişi (kullanıcının, bitmiş maçlar)
 const getMatchHistory = async function (req, res) {
   try {
-    const { userId } = req.params;
+    const userId = req.userId; // JWT token'dan alınan user ID
+    
     const matches = await Match.find({ 
       'players.user': userId,
       date: { $lt: new Date() }

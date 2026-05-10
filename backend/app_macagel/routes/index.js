@@ -34,7 +34,7 @@ router.get('/filterMatchesByCity', matchController.filterMatchesByCity);  // Ma�
 // Maç Detayları
 router.get('/getMatch/:matchId', matchController.getMatch);       // Maç detayları + oyuncuları (positionId ile)
 router.get('/upcomingMatch/:userId', matchController.getUpcomingMatches);  // Kullanıcının yaklaşan maçları
-router.get('/matchHistory/:userId', authMiddleware, matchController.getMatchHistory);      // Kullanıcının geçmiş maçları
+router.get('/matchHistory', authMiddleware, matchController.getMatchHistory);      // Kullanıcının geçmiş maçları
 
 // Maç Yönetimi (Oluştur, Güncelle, Sil)
 router.post('/createMatch', authMiddleware, matchController.createMatch);         // Yeni maç oluştur
