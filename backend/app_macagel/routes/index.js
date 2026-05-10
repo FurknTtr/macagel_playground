@@ -19,8 +19,8 @@ router.get('/verify-reset-token/:token', accountController.verifyResetToken);
 router.post('/reset-password', accountController.resetPassword);
 router.put('/passwordChange', accountController.changePassword);
 router.get('/users/me', accountController.getMyProfile);
-router.put('/updateProfile', accountController.updateProfile);
-router.delete('/deleteAccount', accountController.deleteAccount);
+router.put('/updateProfile', authMiddleware, accountController.updateProfile);
+router.delete('/deleteAccount', authMiddleware, accountController.deleteAccount);
 
 // ==========================================
 // MAÇ YÖNETİMİ (MATCH MANAGEMENT) ROTALARI
@@ -33,7 +33,7 @@ router.get('/filterMatchesByCity', matchController.filterMatchesByCity);  // Ma�
 
 // Maç Detayları
 router.get('/getMatch/:matchId', matchController.getMatch);       // Maç detayları + oyuncuları (positionId ile)
-router.get('/upcomingMatch/:userId', matchController.getUpcomingMatches);  // Kullanıcının yaklaşan maçları
+router.get('/upcomingMatch', authMiddleware, matchController.getUpcomingMatches);  // Kullanıcının yaklaşan maçları
 router.get('/matchHistory/:userId', matchController.getMatchHistory);      // Kullanıcının geçmiş maçları
 
 // Maç Yönetimi (Oluştur, Güncelle, Sil)
@@ -48,7 +48,7 @@ router.put('/inviteCode', matchController.joinMatchWithCode);     // Kod ile ma�
 // MAÇ AKSİYONLARI (MATCH ACTIONS) ROTALARI
 // ==========================================
 router.delete('/leave/:userId', authMiddleware,matchActionController.leaveOrKickPlayer);
-router.post('/joinPosition', matchActionController.joinPosition);
+router.post('/joinPosition', authMiddleware, matchActionController.joinPosition);
 
 // ==========================================
 // ÖNİZLEME VE DEĞERLENDİRME (REVIEW) ROTALARI

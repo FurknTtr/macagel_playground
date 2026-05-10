@@ -7,7 +7,6 @@ const AccountSettings = () => {
     
     // Kullanıcı bilgileri state'i
     const [userInfo, setUserInfo] = useState({
-        userId: '',
         username: '',
         email: '',
         phone: '',
@@ -60,14 +59,23 @@ const AccountSettings = () => {
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
         setPasswords(prev => ({ ...prev, [name]: value }));
-    };
+    };   
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("Token bulunamadı!");
+            return;
+        }
+        
         try {
             const response = await fetch(`${API_BASE_URL}/maca-gel/updateProfile`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}` 
+                },
                 body: JSON.stringify(userInfo)
             });
             const data = await response.json();
@@ -120,12 +128,17 @@ const AccountSettings = () => {
     const handleDeleteAccount = async () => {
         const isConfirmed = window.confirm("Hesabını silmek istediğine emin misin? Bu işlem geri alınamaz!");
         if (!isConfirmed) return;
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("Token bulunamadı!");
+            return;
+        }
         
         try {
             const response = await fetch(`${API_BASE_URL}/maca-gel/deleteAccount`, {
                 method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: userInfo.userId })
+                headers: { Authorization: `Bearer ${token}`}
             });
             const data = await response.json();
             

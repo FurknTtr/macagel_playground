@@ -27,11 +27,16 @@ function Menu() {
       setIsLoadingMatches(true);
       const userStr = localStorage.getItem("user");
       if(!userStr) return;
+
+      const token = localStorage.getItem("token");
+      if(!token) return;
       
       const user = JSON.parse(userStr);
       
       // Backend'den kullanıcının yaklaşan maçlarını çek (bugün ve sonrası)
-      const response = await fetch(`${API_BASE_URL}/maca-gel/upcomingMatch/${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/maca-gel/upcomingMatch}` , {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if(response.ok) {
         const matchesData = await response.json();
         

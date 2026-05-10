@@ -221,6 +221,8 @@ function Match() {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       if (!user.id) return alert("Önce giriş yapmalısınız");
+      const token = JSON.parse(localStorage.getItem("token"));
+      if (!token) return alert("Geçersiz token, lütfen tekrar giriş yapın");
 
       // Kullanıcı zaten başka bir pozisyonda varsa kontrol et
       const userAlreadyInPosition = positions.find(
@@ -236,10 +238,13 @@ function Match() {
       // Backend'e mevkiye katılma isteği yolla
       const response = await fetch(`${API_BASE_URL}/maca-gel/joinPosition`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
           matchId: matchId,
-          userId: user.id,
+          //userID gönderiliyordu sildim.
           positionId: confirmModal.posId,
           position: confirmModal.posRole
         })

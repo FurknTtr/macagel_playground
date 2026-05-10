@@ -42,7 +42,8 @@ const leaveOrKickPlayer = async function (req, res) {
 // Yeni oyuncu eklenir veya mevcut oyuncunun pozisyonu güncellenir
 const joinPosition = async function (req, res) {
   try {
-    const { matchId, userId, positionId, position } = req.body;
+    const { matchId, positionId, position } = req.body;
+    const userId = req.userId;
     
     const match = await Match.findById(matchId);
     if (!match) return createResponse(res, 404, { message: "Maç bulunamadı" });

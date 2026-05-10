@@ -256,7 +256,8 @@ const getMyProfile = async function (req, res) {
 
 const updateProfile = async function (req, res) {
   try {
-    const { userId, username, email, phone } = req.body;
+    const { username, email, phone } = req.body;
+    const userId = req.userId; 
     const user = await User.findByIdAndUpdate(userId, { username, email, phone }, { new: true }).select("-password");
     createResponse(res, 200, { message: "Profil güncellendi", user });
   } catch (error) {
@@ -266,7 +267,7 @@ const updateProfile = async function (req, res) {
 
 const deleteAccount = async function (req, res) {
   try {
-    const { userId } = req.body;
+    const userId = req.userId;
     
     const Match = require('../models/Match');
     
