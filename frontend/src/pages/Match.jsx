@@ -485,16 +485,23 @@ function Match() {
                         onClick={async () => {
                           try {
                             const user = JSON.parse(localStorage.getItem("user") || "{}");
+                            const token = localStorage.getItem("token");
                             if (!user.id) {
+                              alert("Önce giriş yapmalısınız");
+                              return;
+                            }
+                            if (!token) {
                               alert("Önce giriş yapmalısınız");
                               return;
                             }
 
                             const response = await fetch(`${API_BASE_URL}/maca-gel/addFriend`, {
                               method: "POST",
-                              headers: { "Content-Type": "application/json" },
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${token}`
+                              },
                               body: JSON.stringify({
-                                userId: user.id,
                                 friendId: pos.userId
                               })
                             });

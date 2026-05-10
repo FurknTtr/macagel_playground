@@ -7,7 +7,12 @@ const createResponse = function (res, status, content) {
 
 const addFriend = async function (req, res) {
   try {
-    const { userId, friendCode, friendId } = req.body;
+    const userId = req.userId;
+    const { friendCode, friendId } = req.body;
+
+    if (!userId) {
+      return createResponse(res, 401, { message: "Yetkilendirme gerekli" });
+    }
     
     if (!friendCode && !friendId) {
       return createResponse(res, 400, { message: "Arkadaş kodu veya ID gerekli" });

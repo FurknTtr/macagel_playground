@@ -27,13 +27,22 @@ const AccountSettings = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             const userStr = localStorage.getItem("user");
+            const token = localStorage.getItem("token");
             if (!userStr) {
+                navigate("/login");
+                return;
+            }
+            if (!token) {
                 navigate("/login");
                 return;
             }
             const user = JSON.parse(userStr);
             try {
-                const response = await fetch(`${API_BASE_URL}/maca-gel/users/me?userId=${user.id}`);
+                const response = await fetch(`${API_BASE_URL}/maca-gel/users/me`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
                 if (response.ok) {
                     const data = await response.json();
                     setUserInfo({
@@ -104,11 +113,14 @@ const AccountSettings = () => {
         }
         
         try {
+            const token = localStorage.getItem("token");
             const response = await fetch(`${API_BASE_URL}/maca-gel/passwordChange`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
                 body: JSON.stringify({
-                    userId: userInfo.userId,
                     currentPassword: passwords.currentPassword,
                     newPassword: passwords.newPassword
                 })

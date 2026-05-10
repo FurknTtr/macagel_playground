@@ -17,10 +17,10 @@ router.post('/login', accountController.loginUser);  //Authmiddleware'e yok ayn�
 router.post('/forgot-password', accountController.forgotPassword);
 router.get('/verify-reset-token/:token', accountController.verifyResetToken);
 router.post('/reset-password', accountController.resetPassword);
-router.put('/passwordChange', accountController.changePassword);
-router.get('/users/me', accountController.getMyProfile);
 router.put('/updateProfile', authMiddleware, accountController.updateProfile);
 router.delete('/deleteAccount', authMiddleware, accountController.deleteAccount);
+router.put('/passwordChange', authMiddleware, accountController.changePassword);
+router.get('/users/me', authMiddleware, accountController.getMyProfile);
 
 // ==========================================
 // MAÇ YÖNETİMİ (MATCH MANAGEMENT) ROTALARI
@@ -54,16 +54,16 @@ router.post('/joinPosition', authMiddleware, matchActionController.joinPosition)
 // ÖNİZLEME VE DEĞERLENDİRME (REVIEW) ROTALARI
 // ==========================================
 router.get('/pendingReviews/:userId', reviewController.getPendingReviews);
-router.post('/rating/:userId', reviewController.addRating);
-router.put('/rating/:rateId', reviewController.updateRating);
-router.delete('/rating/:rateId', reviewController.deleteRating);
+router.post('/rating/:userId', authMiddleware, reviewController.addRating);
+router.put('/rating/:rateId', authMiddleware, reviewController.updateRating);
+router.delete('/rating/:rateId', authMiddleware, reviewController.deleteRating);
 router.get('/playerPreview/:userId', reviewController.getPlayerPreview);
 
 // ==========================================
 // ARKADAŞLAR (FRIENDS) ROTALARI
 // ==========================================
-router.post('/addFriend', friendController.addFriend);
 router.get('/myFriends', authMiddleware, friendController.getMyFriends);
+router.post('/addFriend', authMiddleware, friendController.addFriend);
 router.delete('/myFriends', friendController.removeFriend);
 router.get('/getPendingRequests', authMiddleware, friendController.getPendingRequests);
 router.put('/acceptFriendRequest', authMiddleware, friendController.acceptFriendRequest);
