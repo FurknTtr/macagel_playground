@@ -105,13 +105,23 @@ const getMyFriends = async function (req, res) {
 
 const removeFriend = async function (req, res) {
   try {
-    const { userId, friendId } = req.query;
+    const { friendId } = req.query;
+    const userId = req.userId; // JWT token'dan alınan user ID
+    
+    if (!friendId) {
+      return createResponse(res, 400, { message: "Arkadaş ID gerekli" });
+    }
     
     const user = await User.findById(userId);
     const friend = await User.findById(friendId);
 
     if (!user || !friend) {
       return createResponse(res, 404, { message: "Kullanıcı bulunamadı" });
+    }
+
+    // Gerçekten arkadaş mı kontrol et
+    if (!user.friends.includes(friendId)) {
+      return createResponse(res, 400, { message: "Bu kişi arkadaşın değil" });
     }
 
     // Her iki tarafta da arkadaş listesinden sil

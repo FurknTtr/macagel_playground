@@ -421,11 +421,11 @@ function Menu() {
 
   const confirmRemoveFriend = async () => {
     try {
-      const userStr = localStorage.getItem("user");
-      if(!userStr) return;
-      const user = JSON.parse(userStr);
-      const response = await fetch(`${API_BASE_URL}/maca-gel/myFriends?userId=${user.id}&friendId=${friendDeleteModal.friendId}`, {
-        method: "DELETE"
+      const token = localStorage.getItem("token");
+      if(!token) return;
+      const response = await fetch(`${API_BASE_URL}/maca-gel/myFriends?friendId=${friendDeleteModal.friendId}`, {
+        method: "DELETE",
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
         setFriends(friends.filter(f => f.id !== friendDeleteModal.friendId));

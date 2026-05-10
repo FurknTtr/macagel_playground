@@ -7,6 +7,7 @@ const matchController = require('../controllers/matchController');
 const matchActionController = require('../controllers/matchActionController');
 const reviewController = require('../controllers/reviewController');
 const friendController = require('../controllers/friendController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // ==========================================
 // HESABIM (ACCOUNT) ROTALARI
@@ -33,12 +34,12 @@ router.get('/filterMatchesByCity', matchController.filterMatchesByCity);  // Ma�
 // Maç Detayları
 router.get('/getMatch/:matchId', matchController.getMatch);       // Maç detayları + oyuncuları (positionId ile)
 router.get('/upcomingMatch/:userId', matchController.getUpcomingMatches);  // Kullanıcının yaklaşan maçları
-router.get('/matchHistory/:userId', matchController.getMatchHistory);      // Kullanıcının geçmiş maçları
+router.get('/matchHistory/:userId', authMiddleware, matchController.getMatchHistory);      // Kullanıcının geçmiş maçları
 
 // Maç Yönetimi (Oluştur, Güncelle, Sil)
-router.post('/createMatch', matchController.createMatch);         // Yeni maç oluştur
-router.put('/updateMatch', matchController.updateMatch);          // Maç bilgilerini güncelle
-router.delete('/deleteMatch', matchController.deleteMatch);       // Maç iptal et (soft-delete)
+router.post('/createMatch', authMiddleware, matchController.createMatch);         // Yeni maç oluştur
+router.put('/updateMatch', authMiddleware, matchController.updateMatch);          // Maç bilgilerini güncelle
+router.delete('/deleteMatch', authMiddleware, matchController.deleteMatch);       // Maç iptal et (soft-delete)
 
 // Maça Katılma
 router.put('/inviteCode', matchController.joinMatchWithCode);     // Kod ile maça katıl
@@ -63,7 +64,7 @@ router.get('/playerPreview/:userId', reviewController.getPlayerPreview);
 // ==========================================
 router.post('/addFriend', friendController.addFriend);
 router.get('/myFriends', friendController.getMyFriends);
-router.delete('/myFriends', friendController.removeFriend);
+router.delete('/myFriends', authMiddleware, friendController.removeFriend);
 router.get('/getPendingRequests', friendController.getPendingRequests);
 router.put('/acceptFriendRequest', friendController.acceptFriendRequest);
 router.put('/rejectFriendRequest', friendController.rejectFriendRequest);
