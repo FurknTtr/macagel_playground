@@ -34,7 +34,7 @@ function Menu() {
       const user = JSON.parse(userStr);
       
       // Backend'den kullanıcının yaklaşan maçlarını çek (bugün ve sonrası)
-      const response = await fetch(`${API_BASE_URL}/maca-gel/upcomingMatch}` , {
+      const response = await fetch(`${API_BASE_URL}/maca-gel/upcomingMatch` , {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if(response.ok) {
