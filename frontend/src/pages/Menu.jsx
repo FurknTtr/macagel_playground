@@ -71,6 +71,11 @@ function Menu() {
   const fetchPastMatches = async () => {
     try {
       setIsLoadingMatches(true);
+      
+      const userStr = localStorage.getItem("user");
+      if(!userStr) return;
+      const user = JSON.parse(userStr);
+
       const token = localStorage.getItem("token");
       if(!token) return;
       
