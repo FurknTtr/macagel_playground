@@ -65,10 +65,6 @@ function CreateMatch() {
 
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      if (!user.id) {
-        alert("Lütfen önce giriş yapın");
-        return;
-      }
 
       // Tarih ve saati birleştirip tek bir tarih objesi (Date objesi için string format) yapalım
       const matchDateStr = `${form.date}T${form.time}:00`;
