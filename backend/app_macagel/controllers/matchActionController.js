@@ -14,7 +14,8 @@ const createResponse = function (res, status, content) {
 const leaveOrKickPlayer = async function (req, res) {
   try {
     const { userId } = req.params;
-    const { matchId, operationType, requesterId } = req.body;
+    const { matchId, operationType } = req.body;
+    const requesterId = req.userId; // Auth middleware ile doğrulanmış kullanıcı ID'si
 
     const match = await Match.findById(matchId);
     if (!match) return createResponse(res, 404, { message: "Maç bulunamadı" });
