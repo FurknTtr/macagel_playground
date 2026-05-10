@@ -103,7 +103,7 @@ function Menu() {
         setMatches(mappedData);
         
         // Geçmiş maçlarda pending reviews'ı da çek (değerlendirilmemiş maçlar)
-        fetchPendingReviews();
+        //fetchPendingReviews();
       }
     } catch (error) {
       console.error("Geçmiş maçlar çekilemedi", error);
@@ -112,6 +112,7 @@ function Menu() {
     }
   };
 
+  /*
   const fetchPendingReviews = async () => {
     try {
       const userStr = localStorage.getItem("user");
@@ -128,6 +129,7 @@ function Menu() {
       console.error("Değerlendirme bekleyen maçlar çekilemedi", error);
     }
   };
+  */
 
   const fetchFriends = async () => {
     try {
