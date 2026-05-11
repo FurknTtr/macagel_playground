@@ -63,6 +63,10 @@ const loginUser = async function (req, res) {
       return createResponse(res, 401, { message: "Hatalı e-posta veya şifre" });
     }
 
+    if (!user.isActive) {
+      return createResponse(res, 403, { message: "Hesabınız askıya alınmış veya silinmiş." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
         return createResponse(res, 401, { message: "Hatalı e-posta veya şifre" });
