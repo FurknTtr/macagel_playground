@@ -223,7 +223,7 @@ export default function HomeScreen() {
           )}
 
           <TouchableOpacity 
-            onPress={() => { /* Maç Detayına Yönlendirilecek */ }}
+            onPress={() => router.push(`/match/${match.id || match._id}` as any)}
             className="bg-green-600 rounded-full px-3 py-2.5 flex-row items-center shadow-sm"
           >
             <Feather name="clipboard" size={11} color="#fff" />
