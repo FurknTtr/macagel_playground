@@ -15,6 +15,7 @@ export default function HomeScreen() {
   const [matches, setMatches] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
 
   // Yönet (Edit) Modal State'leri
   const [editingMatch, setEditingMatch] = useState<any>(null);
@@ -37,6 +38,7 @@ export default function HomeScreen() {
       
       const user = JSON.parse(userStr);
       setUserId(user.id || user._id);
+      setUsername(user.username || 'Oyuncu');
 
       const endpoint = tab === 'upcoming' 
         ? `${API_BASE_URL}/maca-gel/upcomingMatch` 
@@ -276,8 +278,32 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC]">
+      {/* Profil Header Alanı */}
+      <View className="flex-row justify-between items-center px-6 py-4 bg-white">
+        <View>
+          <Text className="text-slate-400 font-bold text-xs uppercase tracking-widest">HOŞGELDİN,</Text>
+          <Text className="text-slate-900 font-black text-xl italic tracking-wide">{username}</Text>
+        </View>
+        
+        <TouchableOpacity 
+          onPress={() => {
+            if (userId) {
+              router.push({
+                pathname: '/player-profile',
+                params: { id: userId }
+              });
+            }
+          }}
+          className="w-12 h-12 rounded-full bg-teal-600/20 border-2 border-teal-500 items-center justify-center shadow-sm"
+        >
+          <Text className="text-teal-600 font-black text-lg uppercase tracking-widest">
+            {username?.substring(0, 2) || 'PP'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Tabs */}
-      <View className="flex-row border-b border-slate-200 px-6 pt-4 bg-white shadow-sm z-10">
+      <View className="flex-row border-b border-slate-200 px-6 pt-2 bg-white shadow-sm z-10">
         <TouchableOpacity 
           className={`mr-8 pb-3 border-b-4 ${activeTab === 'upcoming' ? 'border-green-600' : 'border-transparent'}`}
           onPress={() => setActiveTab('upcoming')}
