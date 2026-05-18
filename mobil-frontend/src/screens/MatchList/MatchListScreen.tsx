@@ -180,10 +180,9 @@ export default function MatchListScreen() {
       });
 
       if (response.status === 200) {
-        Alert.alert("Başarılı", "Maça başarıyla katıldınız!");
+        Alert.alert("Başarılı", "Kod geçerli, maç sayfasına yönlendiriliyorsunuz. Lütfen oynamak istediğiniz pozisyonu seçin.");
         setJoinCode("");
-        // Maç detayına gidilebilir (İleride router.push ayarlarsın)
-        // router.push(`/match/${response.data.match._id}`);
+        router.push(`/match/${response.data.match._id}` as any);
       }
     } catch (error: any) {
       console.error("Kodla katılma hatası:", error);

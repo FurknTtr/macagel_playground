@@ -30,6 +30,7 @@ export default function HomeScreen() {
 
   const fetchMatches = async (tab: TabType) => {
     setIsLoading(true);
+    setMatches([]);
     try {
       const token = await AsyncStorage.getItem('token');
       const userStr = await AsyncStorage.getItem('user');
@@ -42,11 +43,11 @@ export default function HomeScreen() {
 
       const endpoint = tab === 'upcoming' 
         ? `${API_BASE_URL}/maca-gel/upcomingMatch` 
-        : `${API_BASE_URL}/maca-gel/pastMatch`;
+          : `${API_BASE_URL}/maca-gel/matchHistory`;
 
-      const response = await axios.get(endpoint, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+        const response = await axios.get(endpoint, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
       if (response.status === 200) {
         const matchesData = response.data;
@@ -266,7 +267,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity 
           className="bg-green-600 rounded-full px-5 py-2.5 flex-row items-center shadow-sm"
-          onPress={() => console.log("Puan Ver modal/screen will be opened")}
+          onPress={() => router.push(`/match/${match.id}` as any)}
         >
           <Feather name="star" size={14} color="#FFF200" />
           <Text className="text-white text-xs font-black ml-1.5">PUAN VER</Text>

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { getFormationData6v6, getFormationData7v7, getFormationData8v8 } from '../../utils/formations';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config/api';
@@ -28,10 +29,20 @@ export default function MatchScreen() {
   const [teamAFormation, setTeamAFormation] = useState('1-2-2-2');
   const [teamBFormation, setTeamBFormation] = useState('1-2-2-2');
 
+  // Kodu kopyala
+  const copyMatchCode = async () => {
+    if (matchData?.inviteCode) {
+      await Clipboard.setStringAsync(matchData.inviteCode);
+      Alert.alert('Başarılı', 'Maç kodu panoya kopyalandı.');
+    }
+  };
+
   // Sayfa yüklendiğinde verileri çek
-  useEffect(() => {
-    fetchMatchDetails();
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchMatchDetails();
+    }, [id])
+  );
 
   const fetchMatchDetails = async () => {
     try {
@@ -341,7 +352,8 @@ export default function MatchScreen() {
   const totalSpots = matchFormat === '6 vs 6' ? 12 : matchFormat === '7 vs 7' ? 14 : 16;
   const occupiedSpots = positions.filter(p => p.user !== 'Boş').length;
   const emptySpots = totalSpots - occupiedSpots;
-
+    const isPastMatch = matchData?.date ? new Date(matchData.date) < new Date() : false;
+    const canEditFormation = isOwner && !isPastMatch;
   return (
     <SafeAreaView className="flex-1 bg-[#0B1121]" edges={['top', 'left', 'right']}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -369,7 +381,10 @@ export default function MatchScreen() {
             </View>
           </View>
           
-          <TouchableOpacity className="bg-[#052e16] px-3 py-1.5 rounded-lg border border-[#166534] flex-row items-center">
+          <TouchableOpacity 
+            className="bg-[#052e16] px-3 py-1.5 rounded-lg border border-[#166534] flex-row items-center"
+            onPress={copyMatchCode}
+          >
             <Text className="text-[#4ade80] text-[10px] font-black tracking-widest mr-1">KOD:</Text>
             <Text className="text-white text-xs font-black tracking-widest">{matchData?.inviteCode || '---'}</Text>
           </TouchableOpacity>
@@ -446,21 +461,21 @@ export default function MatchScreen() {
         </View>
 
         {/* A Takımı Formasyonu */}
-        <View className={`bg-[#1E293B] rounded-2xl p-4 border border-red-900/40 mb-4 relative overflow-hidden ${!isOwner ? 'opacity-70' : ''}`}>
+        <View className={`bg-[#1E293B] rounded-2xl p-4 border border-red-900/40 mb-4 relative overflow-hidden ${!canEditFormation ? 'opacity-70' : ''}`}>
           <View className="absolute top-0 left-0 w-1 h-full bg-red-600" />
           <View className="flex-row items-center justify-between mb-4 pl-2">
             <View className="flex-row items-center">
               <View className="w-2.5 h-2.5 rounded-full bg-red-600 mr-2 shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
               <Text className="text-red-400 text-xs font-black tracking-widest uppercase">A TAKIMI - FORMASYON SEÇ</Text>
             </View>
-            {!isOwner && <Feather name="lock" size={14} color="#f87171" />}
+            {!canEditFormation && <Feather name="lock" size={14} color="#f87171" />}
           </View>
           
           <View className="flex-row flex-wrap justify-between gap-y-2">
             {availableFormations.map((form) => (
               <TouchableOpacity
                 key={`A-${form}`}
-                disabled={!isOwner}
+                disabled={!canEditFormation}
                 onPress={() => setTeamAFormation(form)}
                 className={`w-[48%] rounded-xl p-3 border ${teamAFormation === form ? 'bg-red-600/20 border-red-600' : 'bg-[#0F172A] border-slate-800'}`}
               >
@@ -471,21 +486,21 @@ export default function MatchScreen() {
         </View>
 
         {/* B Takımı Formasyonu */}
-        <View className={`bg-[#1E293B] rounded-2xl p-4 border border-blue-900/40 mb-6 relative overflow-hidden ${!isOwner ? 'opacity-70' : ''}`}>
+        <View className={`bg-[#1E293B] rounded-2xl p-4 border border-blue-900/40 mb-6 relative overflow-hidden ${!canEditFormation ? 'opacity-70' : ''}`}>
           <View className="absolute top-0 left-0 w-1 h-full bg-blue-600" />
           <View className="flex-row items-center justify-between mb-4 pl-2">
              <View className="flex-row items-center">
               <View className="w-2.5 h-2.5 rounded-full bg-blue-600 mr-2 shadow-[0_0_8px_rgba(37,99,235,0.8)]" />
               <Text className="text-blue-400 text-xs font-black tracking-widest uppercase">B TAKIMI - FORMASYON SEÇ</Text>
              </View>
-             {!isOwner && <Feather name="lock" size={14} color="#60a5fa" />}
+             {!canEditFormation && <Feather name="lock" size={14} color="#60a5fa" />}
           </View>
           
           <View className="flex-row flex-wrap justify-between gap-y-2">
             {availableFormations.map((form) => (
               <TouchableOpacity
                 key={`B-${form}`}
-                disabled={!isOwner}
+                disabled={!canEditFormation}
                 onPress={() => setTeamBFormation(form)}
                 className={`w-[48%] rounded-xl p-3 border ${teamBFormation === form ? 'bg-blue-600/20 border-blue-600' : 'bg-[#0F172A] border-slate-800'}`}
               >
