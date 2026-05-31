@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # --- BACKEND ---
+  backend:
+    build:
+      context: ./backend      # /backend klasöründeki Dockerfile'ı kullanır
+    container_name: macagel-backend
+    ports:
+      - "3000:3000"           # Bilgisayarın 3000 portunu container'ın 3000 portuna bağlar
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://db:27017/macagel # Veritabanı URI'sini, Docker'daki db ismine yönlendirir
+    depends_on:
+      - db                    # Önce veritabanı ayağa kalkmasını bekler
+    networks:
+      - macagel-network
+
+  # --- FRONTEND (WEB) ---
+  frontend:
+    build:
+      context: ./frontend     # /frontend klasöründeki Dockerfile'ı kullanır
+    container_name: macagel-frontend
+    ports:
+      - "8081:80"             # Tarayıcıda http://localhost:8081 portundan erişilir (Jenkins 8080'i kullandığı için değiştirildi)
+    depends_on:
+      - backend
+    networks:
+      - macagel-network
+
+  # --- VERİTABANI (MONGODB) ---
+  db:
+    image: mongo:latest
+    container_name: macagel-mongodb
+    ports:
+      - "27017:27017"         
+    volumes:
+      - mongo-data:/data/db   # Verilerin kaybolmaması için lokal volume oluşturur
+    networks:
+      - macagel-network
+
+volumes:
+  mongo-data:
+
+networks:
+  macagel-network:
+    driver: bridge
