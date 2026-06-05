@@ -8,9 +8,8 @@ services:
     container_name: macagel-backend
     ports:
       - "3000:3000"           # Bilgisayarın 3000 portunu container'ın 3000 portuna bağlar
-    environment:
-      - PORT=3000
-      - MONGODB_URI=mongodb://db:27017/macagel # Veritabanı URI'sini, Docker'daki db ismine yönlendirir
+    env_file:
+      - ./backend/.env        # Ortam değişkenlerini .env dosyasından alır
     depends_on:
       - db                    # Önce veritabanı ayağa kalkmasını bekler
     networks:
